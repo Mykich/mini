@@ -26,47 +26,34 @@
 
 <div id="app" class="min-h-screen pb-24">
 
-    <!-- ===================================== -->
-    <!-- HEADER -->
-    <!-- ===================================== -->
-
-    <header
-        class="sticky top-0 z-50 bg-white border-b border-gray-200">
-
-        <div class="px-5 py-5">
-
-            <div class="flex items-center justify-between">
+<!-- ===================================== -->
+<!-- HEADER -->
+<!-- ===================================== -->
+<header class="sticky top-0 z-50 bg-white border-b border-gray-200">
+    <div class="px-5 py-4">
+        <div class="flex items-center justify-between">
+            
+            <div class="flex items-center gap-3">
+                <!-- Кнопка "Назад" (скрыта по умолчанию) -->
+                <button 
+                    id="header-back-btn" 
+                    class="hidden w-10 h-10 bg-gray-100 hover:bg-gray-200 active:scale-95 rounded-2xl flex items-center justify-center text-xl text-gray-700 transition">
+                    ←
+                </button>
 
                 <div>
-
-                    <h1
-                        class="text-2xl font-bold">
-
-                        Pralnya Vdoma
-
-                    </h1>
-
-                    <p
-                        class="text-sm text-gray-500">
-
-                        Преміальна пральня
-
-                    </p>
-
+                    <h1 class="text-2xl font-bold">Pralnya Vdoma</h1>
+                    <p class="text-sm text-gray-500">Преміальна пральня</p>
                 </div>
+            </div>
 
-                <div
-                    class="w-12 h-12 rounded-full bg-blue-600 text-white flex items-center justify-center text-xl">
-
-                    🧺
-
-                </div>
-
+            <div class="w-12 h-12 rounded-full bg-blue-600 text-white flex items-center justify-center text-xl shadow-sm">
+                🧺
             </div>
 
         </div>
-
-    </header>
+    </div>
+</header>
         <!-- ===================================== -->
     <!-- HOME PAGE -->
     <!-- ===================================== -->

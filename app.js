@@ -533,6 +533,34 @@ if (b2bSubmitBtn) {
         showPage("home");
     });
 }
+// ==========================================
+// ЛОГИКА КНОПКИ "НАЗАД" В ШАПКЕ
+// ==========================================
+
+const headerBackBtn = document.getElementById('header-back-btn');
+
+// 1. Обработка клика по кнопке "Назад"
+if (headerBackBtn) {
+    headerBackBtn.addEventListener('click', () => {
+        // Возвращаемся на главную
+        navigateTo('home');
+    });
+}
+
+// 2. Функция для показа/скрытия кнопки "Назад"
+function updateBackButtonVisibility(currentPage) {
+    if (!headerBackBtn) return;
+
+    // Если мы на Главной страница ("home") — скрываем кнопку, иначе — показываем
+    if (currentPage === 'home') {
+        headerBackBtn.classList.add('hidden');
+    } else {
+        headerBackBtn.classList.remove('hidden');
+    }
+}
+
+// Примечание: вызови функцию updateBackButtonVisibility(page) 
+// внутри твоей основной функции переключения страниц/вкладок (например, navigateTo / switchPage).
 // ======================================
 // Запуск
 // ======================================
