@@ -1,0 +1,284 @@
+/* =======================================================
+   PRALNYA VDOMA MINI APP
+   Version 1.0
+======================================================= */
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+html{
+
+    scroll-behavior:smooth;
+
+}
+
+body{
+
+    font-family:
+        Inter,
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        sans-serif;
+
+    background:#F5F7FA;
+
+    color:#1F2937;
+
+}
+
+
+/* ==========================================
+   APP
+========================================== */
+
+#app{
+
+    max-width:650px;
+
+    margin:auto;
+
+    min-height:100vh;
+
+}
+
+
+/* ==========================================
+   HEADER
+========================================== */
+
+header{
+
+    backdrop-filter:blur(16px);
+
+    background:rgba(255,255,255,.92);
+
+}
+
+
+/* ==========================================
+   Scroll
+========================================== */
+
+::-webkit-scrollbar{
+
+    width:6px;
+
+}
+
+::-webkit-scrollbar-thumb{
+
+    background:#D1D5DB;
+
+    border-radius:50px;
+
+}
+
+.no-scrollbar::-webkit-scrollbar{
+
+    display:none;
+
+}
+
+
+/* ==========================================
+   BUTTON
+========================================== */
+
+button{
+
+    cursor:pointer;
+
+    transition:.25s;
+
+    border:none;
+
+}
+
+button:hover{
+
+    transform:translateY(-2px);
+
+}
+
+button:active{
+
+    transform:scale(.96);
+
+}
+
+/* ==========================================
+   QUICK ACTIONS
+========================================== */
+
+.quick-card{
+
+    background:white;
+
+    border-radius:24px;
+
+    padding:24px;
+
+    box-shadow:
+
+        0 12px 35px rgba(0,0,0,.06);
+
+    transition:.25s;
+
+}
+
+.quick-card:hover{
+
+    transform:translateY(-6px);
+
+}
+
+.quick-card div:first-child{
+
+    font-size:42px;
+
+}
+/* ==========================================
+   CATEGORY
+========================================== */
+
+.category-btn{
+
+    white-space:nowrap;
+
+    border-radius:100px;
+
+    background:white;
+
+    padding:
+
+        12px
+        22px;
+
+    font-weight:600;
+
+    box-shadow:
+
+        0 5px 18px rgba(0,0,0,.05);
+
+}
+
+.category-btn.active{
+
+    background:#2563EB;
+
+    color:white;
+
+}
+/* ==========================================
+   NAVIGATION
+========================================== */
+
+.nav-btn{
+
+    display:flex;
+
+    flex-direction:column;
+
+    justify-content:center;
+
+    align-items:center;
+
+    color:#9CA3AF;
+
+    transition:.25s;
+
+}
+
+.nav-btn.active{
+
+    color:#2563EB;
+
+}
+
+.nav-btn.active span:first-child{
+
+    transform:translateY(-4px);
+
+}
+/* ==========================================
+   FLOAT CART
+========================================== */
+
+#floating-cart{
+
+    animation:
+
+        cartShow
+
+        .35s ease;
+
+}
+
+@keyframes cartShow{
+
+    from{
+
+        opacity:0;
+
+        transform:
+
+            translateY(60px);
+
+    }
+
+    to{
+
+        opacity:1;
+
+        transform:
+
+            translateY(0);
+
+    }
+
+}/* ====================================== */
+/* Categories */
+/* ====================================== */
+
+.category-btn{
+
+    flex:0 0 auto;
+
+    padding:12px 20px;
+
+    border-radius:999px;
+
+    background:#ffffff;
+
+    border:1px solid #E5E7EB;
+
+    font-weight:600;
+
+    color:#374151;
+
+    transition:.25s;
+
+    cursor:pointer;
+
+}
+
+.category-btn:hover{
+
+    background:#EFF6FF;
+
+    border-color:#2563EB;
+}
+
+.category-btn.active{
+
+    background:#2563EB;
+
+    color:white;
+
+    border-color:#2563EB;
+
+}
