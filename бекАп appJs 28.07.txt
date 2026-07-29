@@ -61,14 +61,6 @@ function showPage(pageId) {
         fetchCabinetData();
     }
 
-    // ==========================================
-    // ДОБАВЛЯЕМ НАШУ ФУНКЦИЮ СЮДА:
-    // Если перешли в Заказы — генерируем карточки
-   // if (pageId === "orders") {
-     //   loadMyOrders(); 
-    //}
-    // ==========================================
-
     // Обновляем активную кнопку в нижнем меню
     document.querySelectorAll(".nav-btn").forEach(btn => {
         btn.classList.toggle("active", btn.dataset.page === pageId);
@@ -118,10 +110,6 @@ function renderProducts(category) {
     const products = typeof servicesData !== 'undefined' ? (servicesData[category] || []) : [];
 
     products.forEach(product => {
-        // Проверяем, есть ли уже этот товар в корзине и берем его количество
-        const cartItem = state.cart.find(item => item.id === product.id);
-        const quantity = cartItem ? cartItem.quantity : 0;
-
         const card = document.createElement("div");
         card.className = `
             bg-white rounded-[24px] p-5 
@@ -131,28 +119,6 @@ function renderProducts(category) {
             border border-gray-50/80 
             flex justify-between items-center
         `;
-
-        // Логика кнопок: если товара нет, показываем "+". Если есть, показываем блок с количеством "+ / -"
-        let controlsHTML = '';
-        if (quantity === 0) {
-            controlsHTML = `
-                <button class="add-btn shrink-0 w-12 h-12 rounded-[16px] bg-gray-50 text-blue-600 flex items-center justify-center text-2xl font-light hover:bg-blue-600 hover:text-white transition-colors">
-                    +
-                </button>
-            `;
-        } else {
-            controlsHTML = `
-                <div class="flex items-center gap-3 bg-gray-50 rounded-[16px] p-1 border border-gray-100">
-                    <button class="remove-btn w-9 h-9 rounded-[12px] bg-white text-gray-600 shadow-sm flex items-center justify-center text-xl font-medium hover:text-red-500 transition-colors">
-                        -
-                    </button>
-                    <span class="w-4 text-center font-bold text-gray-800">${quantity}</span>
-                    <button class="add-btn w-9 h-9 rounded-[12px] bg-blue-600 text-white shadow-sm flex items-center justify-center text-xl font-medium hover:bg-blue-700 transition-colors">
-                        +
-                    </button>
-                </div>
-            `;
-        }
 
         card.innerHTML = `
             <div class="flex-1 pr-4">
@@ -166,28 +132,16 @@ function renderProducts(category) {
                     ${product.price} ₴
                 </div>
             </div>
-            <div class="shrink-0 flex items-center justify-center min-w-[48px]">
-                ${controlsHTML}
-            </div>
+            
+            <button 
+                class="add-to-cart-btn shrink-0 w-12 h-12 rounded-[16px] bg-gray-50 text-blue-600 flex items-center justify-center text-2xl font-light hover:bg-blue-600 hover:text-white transition-colors"
+                data-id="${product.id}">
+                +
+            </button>
         `;
 
-        // Вешаем обработчик на плюс
-        const addBtn = card.querySelector(".add-btn");
-        if (addBtn) {
-            addBtn.addEventListener("click", () => {
-                addToCart(product);
-                renderProducts(category); // Обновляем карточку товара, чтобы перерисовалась цифра
-            });
-        }
-
-        // Вешаем обработчик на минус (если он есть)
-        const removeBtn = card.querySelector(".remove-btn");
-        if (removeBtn) {
-            removeBtn.addEventListener("click", () => {
-                removeFromCart(product.id);
-                renderProducts(category); // Обновляем карточку товара, чтобы перерисовалась цифра
-            });
-        }
+        const addBtn = card.querySelector(".add-to-cart-btn");
+        addBtn.addEventListener("click", () => addToCart(product));
 
         container.appendChild(card);
     });
@@ -244,47 +198,20 @@ categoryBtns.forEach(btn => {
 });
 
 // ======================================
-// Корзина (Добавление, Убавление и Отрисовка)
+// Корзина
 // ======================================
 function addToCart(product) {
-    const existingItem = state.cart.find(item => item.id === product.id);
-    
-    if (existingItem) {
-        existingItem.quantity += 1; 
-    } else {
-        state.cart.push({ ...product, quantity: 1 }); 
-    }
-    
+    state.cart.push(product);
     updateCartUI();
     
-    if (typeof tg !== 'undefined' && tg.HapticFeedback) {
-        try { tg.HapticFeedback.impactOccurred("light"); } catch(e) {}
-    }
-}
-
-function removeFromCart(productId) {
-    const itemIndex = state.cart.findIndex(item => item.id === productId);
-    
-    if (itemIndex !== -1) {
-        if (state.cart[itemIndex].quantity > 1) {
-            state.cart[itemIndex].quantity -= 1; 
-        } else {
-            state.cart.splice(itemIndex, 1); 
-        }
-    }
-    
-    updateCartUI();
-
-    if (typeof tg !== 'undefined' && tg.HapticFeedback) {
-        try { tg.HapticFeedback.impactOccurred("light"); } catch(e) {}
+    if (tg && tg.HapticFeedback) {
+        tg.HapticFeedback.impactOccurred("light");
     }
 }
 
 function updateCartUI() {
-    // Считаем сумму с учетом количества (цена * количество)
-    const total = state.cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-    // Считаем общее количество вещей
-    const count = state.cart.reduce((sum, item) => sum + item.quantity, 0);
+    const total = state.cart.reduce((sum, item) => sum + item.price, 0);
+    const count = state.cart.length;
 
     document.querySelectorAll("#cart-count").forEach(el => {
         el.textContent = `${count} товарів`;
@@ -455,82 +382,33 @@ function renderCheckout() {
 }
 
 const confirmOrderBtn = document.getElementById("confirm-order-btn");
-
 if (confirmOrderBtn) {
-
-    confirmOrderBtn.addEventListener("click", async () => {
-
+    confirmOrderBtn.addEventListener("click", () => {
         if (state.cart.length === 0) {
             alert("Ваш кошик порожній!");
             return;
         }
 
-        const address =
-            document.getElementById("checkout-address").value.trim();
-
+        const address = document.getElementById("checkout-address").value.trim();
         if (!address) {
-            alert("Будь ласка, введіть квартиру");
+            alert("Будь ласка, введіть адресу доставки");
             return;
         }
 
-        const comment =
-            document.getElementById("checkout-comment")?.value || "";
+        console.log("Замовлення відправлено:", {
+            cart: state.cart,
+            address: address,
+            comment: document.getElementById("checkout-comment")?.value || ""
+        });
 
-        try {
+        if (tg && tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
 
-            const response = await fetch(`${NGROK_URL}/api/order`, {
-
-                method: "POST",
-
-                headers: {
-                    "Content-Type": "application/json",
-                    "ngrok-skip-browser-warning": "69420"
-                },
-
-                body: JSON.stringify({
-
-                telegram_id: userId,
-
-                name: document.getElementById("profile-name")?.textContent || "",
-
-                phone: state.user?.phone || "",
-
-                apartment: address,
-
-                items: state.cart,
-
-                comment: comment
-
-            })
-
-            });
-
-            const result = await response.json();
-
-            console.log(result);
-
-            if (tg?.HapticFeedback) {
-                tg.HapticFeedback.notificationOccurred("success");
-            }
-
-            alert("🎉 Замовлення успішно оформлено!");
-
-            state.cart = [];
-
-            updateCartUI();
-
-            showPage("home");
-
-        } catch (err) {
-
-            console.error(err);
-
-            alert("Помилка відправки замовлення");
-
-        }
-
+        alert("🎉 Замовлення успішно оформлено! Кур'єр зв'яжеться з вами.");
+        
+        state.cart = [];
+        updateCartUI();
+        showPage("home");
     });
-
 }
 
 // ======================================

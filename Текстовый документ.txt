@@ -1,0 +1,70 @@
+// Функция для загрузки и отрисовки заказов
+function loadMyOrders() {
+    // 1. Находим наш контейнер в HTML
+    const ordersContainer = document.getElementById('orders-list');
+    
+    // Очищаем его на случай, если там уже что-то было, чтобы не дублировать
+    ordersContainer.innerHTML = '';
+
+    // 2. Имитируем данные, которые позже будут приходить от твоего Python-сервера.
+    // В будущем вместо этого массива здесь будет запрос: fetch('/api/orders')...
+    const userOrders = [
+        {
+            id: '1042',
+            date: '29 Липня 2026',
+            service: 'Прання та прасування (до 5 кг)',
+            price: '450 ₴',
+            status: 'В роботі',
+            // Добавляем цвета Tailwind в зависимости от статуса
+            statusClasses: 'bg-blue-100 text-blue-700' 
+        },
+        {
+            id: '1038',
+            date: '25 Липня 2026',
+            service: 'Хімчистка пуховика (ienki-ienki)',
+            price: '800 ₴',
+            status: 'Виконано',
+            statusClasses: 'bg-green-100 text-green-700'
+        }
+    ];
+
+    // Проверка: если заказов нет, показываем заглушку
+    if (userOrders.length === 0) {
+        ordersContainer.innerHTML = '<p class="text-center text-gray-500 py-10">У вас поки немає замовлень.</p>';
+        return;
+    }
+
+    // 3. Перебираем каждый заказ и создаем для него карточку
+    userOrders.forEach(order => {
+        // Создаем новый div для карточки
+        const card = document.createElement('div');
+        
+        // Навешиваем классы Tailwind для красивого отображения
+        card.className = 'bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex flex-col gap-3';
+
+        // Формируем внутренний HTML карточки с помощью шаблонных строк (обратные кавычки ` `)
+        card.innerHTML = `
+            <div class="flex justify-between items-center border-b border-gray-50 pb-2">
+                <span class="font-bold text-gray-800">Замовлення #${order.id}</span>
+                <span class="text-xs font-semibold px-2 py-1 rounded-full ${order.statusClasses}">
+                    ${order.status}
+                </span>
+            </div>
+            <div class="text-sm text-gray-600">
+                <div class="flex items-center gap-2 mb-1">
+                    <span>🗓</span> <span>${order.date}</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span>🧺</span> <span>${order.service}</span>
+                </div>
+            </div>
+            <div class="flex justify-between items-center mt-2 pt-2 border-t border-gray-50">
+                <span class="text-sm text-gray-500">Вартість:</span>
+                <span class="font-bold text-lg text-gray-900">${order.price}</span>
+            </div>
+        `;
+
+        // Добавляем готовую карточку в наш главный контейнер
+        ordersContainer.appendChild(card);
+    });
+}
