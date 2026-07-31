@@ -1,6 +1,7 @@
 import uvicorn
-import datetime
+from datetime import datetime
 import traceback
+import json # Добавь в самый верх файла, если еще нет
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -33,6 +34,7 @@ spreadsheet = GS_CLIENT.open(SPREADSHEET_NAME)
 # Подключаем листы
 sheet_clients = spreadsheet.worksheet("Clients")
 sheet_orders = spreadsheet.worksheet("Лист1")
+sheet_atelier = spreadsheet.worksheet("Atelier")
 
 # --- Модели данных ---
 class ClientProfile(BaseModel):
@@ -44,6 +46,7 @@ class ClientProfile(BaseModel):
 class OrderData(BaseModel):
     user_id: Optional[Any] = None
     telegram_id: Optional[Any] = None
+    username: Optional[str] = ""
     phone: Optional[str] = ""
     name: Optional[str] = ""
     address: Optional[str] = ""
@@ -60,6 +63,7 @@ async def get_cabinet(user_id: int):
         user_str_id = str(user_id)
         client_data = {"name": "", "phone": "", "apartment": "", "discount": 0}
         
+        # 1. Ищем данные клиента
         all_clients = sheet_clients.get_all_records()
         for row in all_clients:
             if str(row.get("telegram_id", "")) == user_str_id:
@@ -72,9 +76,10 @@ async def get_cabinet(user_id: int):
                 break
         
         client_orders = []
+        
+        # 2. Собираем заказы ПРАЧЕЧНОЙ
         all_orders = sheet_orders.get_all_records()
         for row in all_orders:
-        
             order_tg_id = str(row.get("telegram_id", "")) 
             order_phone = str(row.get("Телефон", ""))
             
@@ -84,10 +89,28 @@ async def get_cabinet(user_id: int):
                     "status": row.get("Статус", "Прийнято"),
                     "items": str(row.get("Речі", "")),
                     "date": str(row.get("Дата", "")),
-                    "price": format_price(row.get("Сума", ""))
+                    "price": format_price(row.get("Сума", "")),
+                    "type": "laundry" # Добавили тип, чтобы JS понимал, что это прачечная
+                })
+                
+        # 3. Собираем заявки АТЕЛЬЕ
+        all_atelier = sheet_atelier.get_all_records()
+        for row in all_atelier:
+            # Ищем по колонке "Telegram ID", как ты назвал ее в листе Atelier
+            order_tg_id = str(row.get("Telegram ID", ""))
+            
+            if order_tg_id == user_str_id:
+                client_orders.append({
+                    "id": str(row.get("Номер заявки", "")),
+                    "status": row.get("Статус", "⏳ Очікує огляду"),
+                    "items": str(row.get("Опис", "")),
+                    "date": str(row.get("Дата", "")),
+                    "price": "Після огляду",
+                    "type": "atelier" # Эта метка поможет нам на фронтенде вывести иконку ножниц
                 })
         
         return {"client": client_data, "orders": client_orders}
+        
     except Exception as e:
         print(f"❌ Ошибка при получении данных: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -117,73 +140,146 @@ async def update_cabinet(profile: ClientProfile):
         print(f"❌ Ошибка при сохранении профиля: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-# --- 3. POST: Создание нового заказа ---
+
+# --- 3. POST: Создание заказа (Прачечная / Ателье) ---
+@app.post("/api/orders")  # Check your endpoint name (/api/order or /api/orders)
 @app.post("/api/order")
+@app.post("/api/order/")
 async def create_order(order: OrderData):
     try:
-        # 1. Красиво форматируем вещи с учетом количества (quantity) и считаем сумму
-        items_str = ""
-        total_price = float(order.price or 0)
-        
-        if isinstance(order.items, list):
-            item_names = []
-            calc_price = 0
-            for item in order.items:
-                if isinstance(item, dict):
-                    name = item.get("name", "Річ")
-                    price = float(item.get("price", 0))
-                    qty = int(item.get("quantity", 1)) # Достаем количество (по умолчанию 1)
-                    
-                    # Если количество больше 1, пишем "Футболка (3 шт)"
-                    if qty > 1:
-                        item_names.append(f"{name} ({qty} шт)")
-                    else:
-                        item_names.append(name)
-                        
-                    calc_price += price * qty # Умножаем цену товара на его количество
-            
-            items_str = ", ".join(item_names) # Склеиваем всё: "Футболка (3 шт), Майка"
-            if total_price == 0:
-                total_price = calc_price
-        else:
-            items_str = str(order.items or "Послуги пральні")
+        now = datetime.now()
+        date_str = now.strftime("%Y-%m-%d %H:%M")
 
-        # 2. Генерируем даты и ID
-        now = datetime.datetime.now()
-        date_str = now.strftime("%Y-%m-%d")
-        time_str = now.strftime("%H:%M")
-        order_id = f"ORD-{int(now.timestamp())}"
-        
-        # 3. Собираем массив строк СТРОГО в твоем порядке!
-        new_row = [
-            date_str,         # 1. Дата
-            order.name,       # 2. Ім'я
-            order.phone,      # 3. Телефон
-            order.address,    # 4. Квартира
-            items_str,        # 5. Речі ("Футболка, Майка")
-            order.comment,         # 6. Час
-            "",               # 7. Скасування (пусто)
-            "",               # 8. Підписка (пусто)
-            "Прийнято",       # 9. Статус
-            "",               # 10. Повідомлено (пусто)
-            total_price,      # 11. Сума
-            "",               # 12. Фото (пусто)
-            order_id,         # 13. Номер замовлення
-            "",               # 14. Останній повідомлений статус (пусто)
-            "",                # 15. Розпізнано (пусто)
-            str(order.telegram_id)
-        ]
-        
-        sheet_orders.append_row(new_row)
-        print(f"✅ Заказ {order_id} ({items_str}) успішно записано!")
-        
-        return {"status": "success", "order_id": order_id}
+        # === РАЗВИЛКА: ЕСЛИ ЭТО АТЕЛЬЕ ===
+        if order.service == "atelier":
+            order_id = f"ATL-{int(now.timestamp())}"
+            item_names = []
+            
+            # 1. Создаем переменную для подсчета общей суммы
+            total_price = 0 
+            
+            raw_items = order.items
+            
+            if isinstance(raw_items, str):
+                try:
+                    raw_items = json.loads(raw_items)
+                except:
+                    pass
+
+            if isinstance(raw_items, list):
+                for item in raw_items:
+                    if hasattr(item, "dict"):
+                        item = item.dict()
+                        
+                    if isinstance(item, dict):
+                        name = str(item.get("name", "")).strip()
+                        quantity = int(item.get("quantity", 1) or 1)
+                        
+                        # 2. Достаем цену из каждого товара
+                        item_price = float(item.get("price", 0))
+                        
+                        if name:
+                            # 3. Считаем сумму: цена * количество
+                            total_price += item_price * quantity
+                            
+                            if quantity > 1:
+                                item_names.append(f"• {name} — {quantity} шт.")
+                            else:
+                                item_names.append(f"• {name}")
+                                
+            if not item_names:
+                item_names.append("• Послуги ательє (деталі не розпізнано)")
+
+            items_text = "\n".join(item_names)
+            
+            # 4. Форматируем сумму, чтобы было красиво (отсекаем нули)
+            formatted_price = f"{int(total_price)} ₴"
+
+            # 5. Собираем строку для таблицы
+            new_row = [
+                date_str,                 # 1-я колонка: Дата
+                order.name,               # 2-я колонка: Имя
+                str(order.telegram_id),   # 3-я колонка: Telegram ID
+                order.username or "",     # 4-я колонка: Username
+                items_text,               # 5-я колонка: Послуги (Названия)
+                "",                         # 6-я: Фото
+                "⏳ Очікує огляду",      # 7-я колонка Фото колонка: Статус
+                "",                       # 8-я: 
+                "",                       # 9-я колонка: Останній повідомлений статус
+                order_id,                 # 10-я колонка: Номер заявкиколонка
+                formatted_price           # 11-я колонка: СУМА
+            ]
+
+            sheet_atelier.append_row(new_row)
+            print(f"✅ Заявка в Ательє {order_id} успішно записана! Сума: {formatted_price}")
+
+            return {
+                "status": "success",
+                "order_id": order_id
+            }
+
+        # === ИНАЧЕ: ЭТО СТАНДАРТНЫЙ ЗАКАЗ (ПРАЧЕЧНАЯ) ===
+        else:
+            # 1. Красиво форматируем вещи с учетом количества
+            items_str = ""
+            total_price = float(order.price or 0)
+            
+            if isinstance(order.items, list):
+                item_names = []
+                calc_price = 0
+                for item in order.items:
+                    if isinstance(item, dict):
+                        name = item.get("name", "Річ")
+                        price = float(item.get("price", 0))
+                        qty = int(item.get("quantity", 1))
+                        
+                        if qty > 1:
+                            item_names.append(f"{name} ({qty} шт)")
+                        else:
+                            item_names.append(name)
+                            
+                        calc_price += price * qty
+                
+                items_str = ", ".join(item_names)
+                if total_price == 0:
+                    total_price = calc_price
+            else:
+                items_str = str(order.items or "Послуги пральні")
+
+            # 2. Генерируем ID для прачечной
+            order_id = f"ORD-{int(now.timestamp())}"
+            
+            # 3. Собираем массив строк для Прачечной
+            new_row = [
+                now.strftime("%Y-%m-%d"),
+                order.name,
+                order.phone,
+                order.address,
+                items_str,
+                order.comment,
+                "",
+                "",
+                "Прийнято",
+                "",
+                total_price,
+                "",
+                order_id,
+                "",
+                "",
+                str(order.telegram_id)
+            ]
+            
+            sheet_orders.append_row(new_row)
+            print(f"✅ Заказ {order_id} ({items_str}) успішно записано!")
+            
+            return {"status": "success", "order_id": order_id}
 
     except Exception as e:
         print("❌ Ошибка при создании заказа:")
         print(traceback.format_exc())
         raise HTTPException(status_code=500, detail=str(e))
-    
+
+
 def format_price(val):
     if not val:
         return "0 грн"
@@ -209,6 +305,7 @@ def format_price(val):
     except ValueError:
         # Если пришел совсем странный текст, который нельзя превратить в число
         return str(val) if "грн" in str(val) else f"{val} грн"
+
 
 if __name__ == "__main__":
     uvicorn.run(app, host="127.0.0.1", port=8000)

@@ -456,7 +456,7 @@ shadow-xl">
 <!-- POPULAR -->
 <!-- ===================================== -->
 
-<section class="mt-7">
+<!--<section class="mt-7">
 
     <h3 class="text-xl font-bold mb-4">
 
@@ -468,7 +468,7 @@ shadow-xl">
 
     </div>
 
-</section>
+</section> -->
 
 
 
@@ -596,12 +596,21 @@ shadow-xl">
         </div>
     </section>
 
-    <!-- Список услуг ателье -->
-    <div id="atelier-list" class="grid grid-cols-1 gap-4">
-        <!-- Заполняется через JS -->
-    </div>
-</main>
+   <!-- Шапка Ателье с кнопкой отмены (-) -->
+<div class="flex items-center justify-between mb-4">
+    <h2 class="text-xl font-bold text-gray-800">Послуги ательє</h2>
+    
+    <!-- Кнопка «Минус» (Отмена / Назад) -->
+    <button id="closeAtelierBtn" class="w-9 h-9 flex items-center justify-center bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold rounded-full transition-colors">
+        ✕
+    </button>
+</div>
 
+<!-- Список услуг ателье -->
+<div id="atelier-list" class="grid grid-cols-1 gap-4">
+    <!-- Заполняется через JS -->
+</div>
+</main>
 <!-- ===================================== -->
 <!-- B2B PAGE (Для бізнесу) -->
 <!-- ===================================== -->
@@ -831,7 +840,7 @@ shadow-xl">
         Додати нову картку
     </button>
 </div>
-</div>
+
 <script src="data.js"></script>
 <script src="services.js"></script>
 <script src="app.js"></script>

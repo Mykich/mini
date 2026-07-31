@@ -106,6 +106,16 @@ if (headerBackBtnMain) {
         if (tg && tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
     });
 }
+// ======================================
+// Закрытие/Отмена меню Ателье
+// ======================================
+const closeAtelierBtn = document.getElementById('closeAtelierBtn');
+if (closeAtelierBtn) {
+    closeAtelierBtn.addEventListener('click', () => {
+        showPage('home'); // Возвращаем на главную, как это настроено в твоем роутинге
+        if (tg && tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium'); // Добавил приятную вибрацию, как у тебя в других кнопках
+    });
+}
 
 // ======================================
 // Рендер Каталога Прачечной
@@ -204,6 +214,10 @@ function renderAtelierServices() {
     const atelierItems = typeof servicesData !== 'undefined' ? (servicesData.atelier || []) : [];
 
     atelierItems.forEach(product => {
+        // Проверяем, есть ли эта услуга в корзине и берем ее количество
+        const cartItem = state.cart.find(item => item.id === product.id);
+        const quantity = cartItem ? cartItem.quantity : 0;
+
         const card = document.createElement("div");
         card.className = `
             bg-white rounded-[24px] p-5 
@@ -212,18 +226,57 @@ function renderAtelierServices() {
             flex justify-between items-center
         `;
 
+        // Логика кнопок: если товара нет -> "+". Если есть -> "- / кол-во / +"
+        let controlsHTML = '';
+        if (quantity === 0) {
+            controlsHTML = `
+                <button class="add-btn shrink-0 w-12 h-12 rounded-[16px] bg-indigo-50 text-indigo-600 flex items-center justify-center text-2xl font-light hover:bg-indigo-600 hover:text-white transition">
+                    +
+                </button>
+            `;
+        } else {
+            controlsHTML = `
+                <div class="flex items-center gap-3 bg-indigo-50 rounded-[16px] p-1 border border-indigo-100">
+                    <button class="remove-btn w-9 h-9 rounded-[12px] bg-white text-gray-600 shadow-sm flex items-center justify-center text-xl font-medium hover:text-red-500 transition-colors">
+                        -
+                    </button>
+                    <span class="w-4 text-center font-bold text-gray-800">${quantity}</span>
+                    <button class="add-btn w-9 h-9 rounded-[12px] bg-indigo-600 text-white shadow-sm flex items-center justify-center text-xl font-medium hover:bg-indigo-700 transition-colors">
+                        +
+                    </button>
+                </div>
+            `;
+        }
+
         card.innerHTML = `
             <div class="flex-1 pr-4">
                 <h3 class="text-[17px] font-bold text-gray-900">${product.name}</h3>
                 <p class="text-[13px] text-gray-500 mt-1.5">${product.description}</p>
-                <div class="text-blue-600 text-[16px] font-bold mt-3">${product.price} ₴</div>
+                <div class="text-indigo-600 text-[16px] font-bold mt-3">${product.price} ₴</div>
             </div>
-            <button class="add-to-cart-btn shrink-0 w-12 h-12 rounded-[16px] bg-indigo-50 text-indigo-600 flex items-center justify-center text-2xl font-light hover:bg-indigo-600 hover:text-white transition">
-                +
-            </button>
+            <div class="shrink-0 flex items-center justify-center min-w-[48px]">
+                ${controlsHTML}
+            </div>
         `;
 
-        card.querySelector("button").addEventListener("click", () => addToCart(product));
+        // Обработчик на кнопку "+"
+        const addBtn = card.querySelector(".add-btn");
+        if (addBtn) {
+            addBtn.addEventListener("click", () => {
+                addToCart(product, 'atelier');
+                renderAtelierServices(); // Перерисовываем, чтобы появился минус и цифра
+            });
+        }
+
+        // Обработчик на кнопку "-"
+        const removeBtn = card.querySelector(".remove-btn");
+        if (removeBtn) {
+            removeBtn.addEventListener("click", () => {
+                removeFromCart(product.id);
+                renderAtelierServices(); // Перерисовываем, чтобы цифра уменьшилась
+            });
+        }
+
         container.appendChild(card);
     });
 }
@@ -244,15 +297,17 @@ categoryBtns.forEach(btn => {
 });
 
 // ======================================
+// ======================================
 // Корзина (Добавление, Убавление и Отрисовка)
 // ======================================
-function addToCart(product) {
+function addToCart(product, serviceType = 'laundry') {
     const existingItem = state.cart.find(item => item.id === product.id);
     
     if (existingItem) {
         existingItem.quantity += 1; 
     } else {
-        state.cart.push({ ...product, quantity: 1 }); 
+        // Добавлена метка service для правильной маршрутизации на бэкенде
+        state.cart.push({ ...product, quantity: 1, service: serviceType }); 
     }
     
     updateCartUI();
@@ -303,7 +358,6 @@ function updateCartUI() {
         }
     }
 }
-
 // ======================================
 // Модальные окна (Bottom Sheets) в Кабинете
 // ======================================
@@ -457,9 +511,7 @@ function renderCheckout() {
 const confirmOrderBtn = document.getElementById("confirm-order-btn");
 
 if (confirmOrderBtn) {
-
     confirmOrderBtn.addEventListener("click", async () => {
-
         if (state.cart.length === 0) {
             alert("Ваш кошик порожній!");
             return;
@@ -476,37 +528,29 @@ if (confirmOrderBtn) {
         const comment =
             document.getElementById("checkout-comment")?.value || "";
 
+        // === ОПРЕДЕЛЯЕМ ТИП УСЛУГИ (Ателье или Прачечная) ===
+        const isAtelier = state.cart.some(item => item.service === 'atelier');
+        const orderService = isAtelier ? 'atelier' : 'laundry';
+
         try {
-
             const response = await fetch(`${NGROK_URL}/api/order`, {
-
                 method: "POST",
-
                 headers: {
                     "Content-Type": "application/json",
                     "ngrok-skip-browser-warning": "69420"
                 },
-
                 body: JSON.stringify({
-
-                telegram_id: userId,
-
-                name: document.getElementById("profile-name")?.textContent || "",
-
-                phone: state.user?.phone || "",
-
-                apartment: address,
-
-                items: state.cart,
-
-                comment: comment
-
-            })
-
+                    telegram_id: userId,
+                    name: document.getElementById("profile-name")?.textContent || "",
+                    phone: state.user?.phone || "",
+                    apartment: address,
+                    items: state.cart,
+                    comment: comment,
+                    service: orderService // <--- ВОТ НАША НОВАЯ СТРОЧКА!
+                })
             });
 
             const result = await response.json();
-
             console.log(result);
 
             if (tg?.HapticFeedback) {
@@ -516,21 +560,14 @@ if (confirmOrderBtn) {
             alert("🎉 Замовлення успішно оформлено!");
 
             state.cart = [];
-
             updateCartUI();
-
             showPage("home");
 
         } catch (err) {
-
             console.error(err);
-
             alert("Помилка відправки замовлення");
-
         }
-
     });
-
 }
 
 // ======================================
