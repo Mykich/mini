@@ -174,35 +174,26 @@ button:active{
 
 }
 /* ==========================================
-   NAVIGATION
+  NAVIGATION
 ========================================== */
 
-.nav-btn{
-
-    display:flex;
-
-    flex-direction:column;
-
-    justify-content:center;
-
-    align-items:center;
-
-    color:#9CA3AF;
-
-    transition:.25s;
-
+.nav-btn {
+    flex: 1; /* <-- Добавлено: каждая кнопка занимает равную долю ширины */
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    color: #9CA3AF;
+    transition: .25s;
 }
 
-.nav-btn.active{
-
-    color:#2563EB;
-
+.nav-btn.active {
+    color: #2563EB;
 }
 
-.nav-btn.active span:first-child{
-
-    transform:translateY(-4px);
-
+.nav-btn.active span:first-child {
+    transform: translateY(-4px);
 }
 /* ==========================================
    FLOAT CART

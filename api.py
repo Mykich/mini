@@ -2,6 +2,10 @@ import uvicorn
 from datetime import datetime
 import traceback
 import json # Добавь в самый верх файла, если еще нет
+import requests
+
+from fastapi.staticfiles import StaticFiles
+
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -9,8 +13,30 @@ from typing import Optional, Any
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 
-app = FastAPI()
+# === Уведомление клиенту ===
+TELEGRAM_TOKEN = "7779234071:AAFErwDEU8-gobibHl_M94je9nbvs5DwIS4" 
+ADMIN_CHAT_ID = "987895270" 
 
+def send_tg_message(chat_id, text):
+    """Функция для отправки сообщений через Telegram API"""
+    if not chat_id:
+        return
+        
+    url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
+    payload = {
+        "chat_id": chat_id,
+        "text": text,
+        "parse_mode": "HTML" # Позволяет использовать <b>жирный</b> текст и <i>курсив</i>
+    }
+    try:
+        response = requests.post(url, json=payload)
+        if not response.ok:
+            print(f"⚠️ Ошибка отправки ТГ: {response.text}")
+    except Exception as e:
+        print(f"⚠️ Ошибка сети при отправке ТГ: {e}")
+
+app = FastAPI()
+from fastapi.middleware.cors import CORSMiddleware
 # --- Настройка CORS ---
 app.add_middleware(
     CORSMiddleware,
@@ -35,6 +61,7 @@ spreadsheet = GS_CLIENT.open(SPREADSHEET_NAME)
 sheet_clients = spreadsheet.worksheet("Clients")
 sheet_orders = spreadsheet.worksheet("Лист1")
 sheet_atelier = spreadsheet.worksheet("Atelier")
+sheet_b2b = spreadsheet.worksheet("B2B2.0")
 
 # --- Модели данных ---
 class ClientProfile(BaseModel):
@@ -55,6 +82,17 @@ class OrderData(BaseModel):
     price: Optional[Any] = 0
     date: Optional[str] = ""
     comment: Optional[str] = ""
+
+class B2BData(BaseModel):
+    company: str
+    phone: str
+    details: Optional[str] = ""
+    telegram_id: Optional[Any] = None
+    name: Optional[str] = ""
+
+class AIMessageData(BaseModel):
+    message: str
+    telegram_id: Optional[Any] = None
 
 # --- 1. GET: Загрузка кабинета ---
 @app.get("/api/cabinet")
@@ -196,29 +234,58 @@ async def create_order(order: OrderData):
             formatted_price = f"{int(total_price)} ₴"
 
             # 5. Собираем строку для таблицы
+           # 5. Собираем строку для таблицы (с твоим новым порядком колонок)
             new_row = [
-                date_str,                 # 1-я колонка: Дата
-                order.name,               # 2-я колонка: Имя
-                str(order.telegram_id),   # 3-я колонка: Telegram ID
-                order.username or "",     # 4-я колонка: Username
-                items_text,               # 5-я колонка: Послуги (Названия)
-                "",                         # 6-я: Фото
-                "⏳ Очікує огляду",      # 7-я колонка Фото колонка: Статус
-                "",                       # 8-я: 
-                "",                       # 9-я колонка: Останній повідомлений статус
-                order_id,                 # 10-я колонка: Номер заявкиколонка
-                formatted_price           # 11-я колонка: СУМА
+                date_str,                 # 1-я: Дата
+                order.name,               # 2-я: Имя
+                str(order.telegram_id),   # 3-я: Telegram ID
+                order.username or "",     # 4-я: Username
+                items_text,               # 5-я: Послуги (Названия)
+                "",                       # 6-я: Фото
+                "⏳ Очікує огляду",        # 7-я: Статус
+                "",                       # 8-я: Комментарий/Колонка
+                "",                       # 9-я: Останній повідомлений статус
+                order_id,                 # 10-я: Номер заявки
+                formatted_price           # 11-я: СУМА
             ]
 
             sheet_atelier.append_row(new_row)
             print(f"✅ Заявка в Ательє {order_id} успішно записана! Сума: {formatted_price}")
 
+            # === НОВИЙ БЛОК: УВЕДОМЛЕНИЯ В TELEGRAM (АТЕЛЬЕ) ===
+            
+            # 1. Сообщение для клиента
+            client_text = (
+                f"✅ <b>Заявку успішно відправлено!</b>\n\n"
+                f"<b>Номер:</b> {order_id}\n"
+                f"<b>Послуги:</b>\n{items_text}\n"
+                f"<b>Орієнтовна сума:</b> {formatted_price}\n\n"
+                f"Майстер зв'яжеться з вами найближчим часом! ✂️"
+            )
+            # Отправляем клиенту по его telegram_id
+            send_tg_message(order.telegram_id, client_text)
+            
+            # 2. Сообщение для администратора (Тебе и Светлане Николаевне)
+            admin_text = (
+                f"✂️ <b>НОВА ЗАЯВКА (Ательє)</b> ✂️\n\n"
+                f"<b>Номер:</b> {order_id}\n"
+                f"<b>Клієнт:</b> {order.name}\n"
+                f"<b>Телефон:</b> {order.phone}\n"
+                f"<b>Адреса:</b> {order.address}\n"
+                f"<b>Послуги:</b>\n{items_text}\n"
+                f"<b>Орієнтовна сума:</b> {formatted_price}\n"
+                f"<b>Коментар:</b> {order.comment or 'Немає'}"
+            )
+            # Отправляем в админский чат
+            send_tg_message(ADMIN_CHAT_ID, admin_text)
+            
+            # ====================================================
+
             return {
                 "status": "success",
                 "order_id": order_id
             }
-
-        # === ИНАЧЕ: ЭТО СТАНДАРТНЫЙ ЗАКАЗ (ПРАЧЕЧНАЯ) ===
+ # === ИНАЧЕ: ЭТО СТАНДАРТНЫЙ ЗАКАЗ (ПРАЧЕЧНАЯ) ===
         else:
             # 1. Красиво форматируем вещи с учетом количества
             items_str = ""
@@ -272,13 +339,83 @@ async def create_order(order: OrderData):
             sheet_orders.append_row(new_row)
             print(f"✅ Заказ {order_id} ({items_str}) успішно записано!")
             
+            # === НОВИЙ БЛОК: УВЕДОМЛЕНИЯ В TELEGRAM (ПРАЧЕЧНАЯ) ===
+            
+            # 1. Сообщение для клиента
+            client_text = (
+                f"🫧 <b>Ваше замовлення прийнято!</b>\n\n"
+                f"<b>Номер:</b> {order_id}\n"
+                f"<b>Речі:</b> {items_str}\n"
+                f"<b>Сума:</b> {int(total_price)} ₴\n\n"
+                f"Дякуємо, що обрали PralnyaVdoma! 💙"
+            )
+            send_tg_message(order.telegram_id, client_text)
+            
+            # 2. Сообщение для адміністратора 
+            admin_text = (
+                f"🫧 <b>НОВЕ ЗАМОВЛЕННЯ (Пральня)</b> 🫧\n\n"
+                f"<b>Номер:</b> {order_id}\n"
+                f"<b>Клієнт:</b> {order.name}\n"
+                f"<b>Телефон:</b> {order.phone}\n"
+                f"<b>Квартира:</b> {order.address}\n"
+                f"<b>Речі:</b> {items_str}\n"
+                f"<b>Сума:</b> {int(total_price)} ₴\n"
+                f"<b>Коментар:</b> {order.comment or 'Немає'}"
+            )
+            send_tg_message(ADMIN_CHAT_ID, admin_text)
+            
+            # ====================================================
+
             return {"status": "success", "order_id": order_id}
 
     except Exception as e:
         print("❌ Ошибка при создании заказа:")
         print(traceback.format_exc())
         raise HTTPException(status_code=500, detail=str(e))
+    
+# --- 4. POST: Заявка B2B (Співпраця) ---
+@app.post("/api/b2b")
+async def create_b2b_request(data: B2BData):
+    try:
+        now = datetime.now()
+        date_str = now.strftime("%Y-%m-%d %H:%M")
 
+        new_row = [
+            date_str,
+            data.company,
+            data.phone,
+            data.details or "",
+            str(data.telegram_id or ""),
+            "Нова заявка"
+        ]
+
+        sheet_b2b.append_row(new_row)
+        print(f"✅ B2B заявка від {data.company} успішно збережена!")
+
+        # 1. Повідомлення клієнту в Телеграм
+        client_text = (
+            f"🤝 <b>Дякуємо за запит на співпрацю!</b>\n\n"
+            f"<b>Компанія:</b> {data.company}\n"
+            f"Наш менеджер зв'яжеться з вами найближчим часом для обговорення індивідуальних умов."
+        )
+        if data.telegram_id:
+            send_tg_message(data.telegram_id, client_text)
+
+        # 2. Повідомлення адміністратору (в адмінський чат)
+        admin_text = (
+            f"💼 <b>НОВА B2B ЗАЯВКА (Співпраця)</b> 💼\n\n"
+            f"<b>Компанія:</b> {data.company}\n"
+            f"<b>Телефон:</b> {data.phone}\n"
+            f"<b>Деталі:</b> {data.details or 'Не вказано'}\n"
+            f"<b>Telegram ID:</b> {data.telegram_id or 'Невідомо'}"
+        )
+        send_tg_message(ADMIN_CHAT_ID, admin_text)
+
+        return {"status": "success"}
+
+    except Exception as e:
+        print(f"❌ Помилка створення B2B заявки: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 def format_price(val):
     if not val:
@@ -306,6 +443,42 @@ def format_price(val):
         # Если пришел совсем странный текст, который нельзя превратить в число
         return str(val) if "грн" in str(val) else f"{val} грн"
 
+# --- 5. POST: AI Чат Консультант ---
+@app.post("/api/ai")
+async def ai_chat(data: AIMessageData):
+    try:
+        user_msg = data.message.lower()
 
-if __name__ == "__main__":
-    uvicorn.run(app, host="127.0.0.1", port=8000)
+        # Системные знания о PralnyaVdoma (Промпт контекста)
+        # Сюда мы в будущем подключаем вызов API Gemini / OpenAI
+        
+        # Временный умный ответчик на основе ключевых слов (пока не вставили ключ API):
+        if "цін" in user_msg or "скільки" in user_msg or "кошт" in user_msg:
+            reply = "💡 <b>Наші базові тарифи:</b>\n\n• Прання сорочки / футболки — 80 ₴\n• Прання штанів / джинсів — 120 ₴\n• Чистка зимової куртки — від 350 ₴\n\nПовний каталог послуг ви можете переглянути у вкладці <b>'Замовити'</b>!"
+        elif "атель" in user_msg or "пошити" in user_msg or "ремонт" in user_msg:
+            reply = "✂️ <b>Послуги Ательє:</b>\n\nМи виконуємо ремонт одягу, вкорочування штанів, заміну блискавок та підгонку по фігурі.\n\nЗавітайте у вкладку <b>'Ательє'</b>, щоб залишити заявку на огляд майстра!"
+        elif "плям" in user_msg or "вино" in user_msg or "кава" in user_msg:
+            reply = "🧪 <b>Порада від експерта:</b>\n\nГоловне правило — не розтирайте пляму серветкою і не замочуйте окропом! Промокніть сухою серветкою та якомога швидше передайте річ нам на аквачистку. Ми приберемо її без шкоди для тканини."
+        else:
+            reply = f"Я зрозумів ваше запитання: <i>'{data.message}'</i>.\n\nЯк ваші помічники з <b>PralnyaVdoma</b>, ми з радістю допоможемо! Для точного розрахунку або оформлення послуги просто скористайтесь нашими меню або зверніться до менеджера."
+
+        return {"status": "success", "reply": reply}
+
+    except Exception as e:
+        print(f"❌ Помилка AI: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+import os
+from fastapi.staticfiles import StaticFiles
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+FRONTEND_DIR = os.path.join(BASE_DIR, "frontend")
+
+
+# Вот тут меняем "frontend" на FRONTEND_DIR без кавычек!
+app.mount("/", StaticFiles(directory=FRONTEND_DIR, html=True), name="frontend")
+for route in app.routes:
+   
+
+    if __name__ == "__main__":
+        uvicorn.run(app, host="127.0.0.1", port=8000)

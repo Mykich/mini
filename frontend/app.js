@@ -24,7 +24,8 @@ if (user) {
     const nameEl = document.getElementById("user-name");
     if (nameEl) nameEl.textContent = user.first_name;
     
-    const profileNameEl = document.getElementById("profile-name");
+    // ИСПРАВЛЕНО: ищем правильный ID из HTML
+    const profileNameEl = document.getElementById("profile-display-name");
     if (profileNameEl) profileNameEl.textContent = user.first_name;
 }
 
@@ -34,21 +35,26 @@ const pages = {
     order: document.getElementById("order-page"),
     orders: document.getElementById("orders-page"),
     ai: document.getElementById("ai-page"),
-    profile: document.getElementById("profile-page"),
+    // ИСПРАВЛЕНО: привязываем к cabinet-page вместо profile-page
+    profile: document.getElementById("cabinet-page"), 
     atelier: document.getElementById("atelier-page"),
     b2b: document.getElementById("b2b-page"),
     checkout: document.getElementById("checkout-page")
 };
 
 function showPage(pageId) {
-    // Прячем все страницы
-    Object.values(pages).forEach(section => {
-        if (section) section.classList.add("hidden");
+    // ИСПРАВЛЕНО: Прячем только главные контейнеры страниц, а не все <section> подряд!
+    Object.values(pages).forEach(pageEl => {
+        if (pageEl) pageEl.classList.add("hidden");
     });
+
+    // Ищем нужную страницу
+    const targetPage = pages[pageId] || document.getElementById(pageId);
     
-    // Показываем нужную
-    if (pages[pageId]) {
-        pages[pageId].classList.remove("hidden");
+    if (targetPage) {
+        targetPage.classList.remove("hidden");
+    } else {
+        console.warn(`Страница с id "${pageId}" не найдена в HTML!`);
     }
 
     // Если перешли в Ателье — рендерим его услуги
@@ -56,18 +62,10 @@ function showPage(pageId) {
         renderAtelierServices();
     }
 
-    // Если перешли в Заказы или Кабинет — подтягиваем данные с Python сервера
-    if (pageId === "orders" || pageId === "profile") {
-        fetchCabinetData();
+    // Запускаем загрузку данных кабинета
+    if (pageId === "orders" || pageId === "profile" || pageId === "cabinet") {
+        loadCabinetData();
     }
-
-    // ==========================================
-    // ДОБАВЛЯЕМ НАШУ ФУНКЦИЮ СЮДА:
-    // Если перешли в Заказы — генерируем карточки
-   // if (pageId === "orders") {
-     //   loadMyOrders(); 
-    //}
-    // ==========================================
 
     // Обновляем активную кнопку в нижнем меню
     document.querySelectorAll(".nav-btn").forEach(btn => {
@@ -508,32 +506,37 @@ function renderCheckout() {
     }
 }
 
+// ======================================
+// Оформление заказа (Checkout) и отправка на сервер
+// ======================================
 const confirmOrderBtn = document.getElementById("confirm-order-btn");
 
 if (confirmOrderBtn) {
     confirmOrderBtn.addEventListener("click", async () => {
         if (state.cart.length === 0) {
-            alert("Ваш кошик порожній!");
+            Telegram.WebApp.showAlert("Ваш кошик порожній!");
             return;
         }
 
-        const address =
-            document.getElementById("checkout-address").value.trim();
-
+        const address = document.getElementById("checkout-address").value.trim();
         if (!address) {
-            alert("Будь ласка, введіть квартиру");
+            Telegram.WebApp.showAlert("Будь ласка, введіть квартиру");
             return;
         }
 
-        const comment =
-            document.getElementById("checkout-comment")?.value || "";
+        const comment = document.getElementById("checkout-comment")?.value || "";
 
         // === ОПРЕДЕЛЯЕМ ТИП УСЛУГИ (Ателье или Прачечная) ===
         const isAtelier = state.cart.some(item => item.service === 'atelier');
         const orderService = isAtelier ? 'atelier' : 'laundry';
 
+        // Блокируем кнопку на время отправки
+        const originalText = confirmOrderBtn.innerText;
+        confirmOrderBtn.innerText = "Відправка...";
+        confirmOrderBtn.disabled = true;
+
         try {
-            const response = await fetch(`${NGROK_URL}/api/order`, {
+            const response = await fetch('/api/order', {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -541,61 +544,102 @@ if (confirmOrderBtn) {
                 },
                 body: JSON.stringify({
                     telegram_id: userId,
-                    name: document.getElementById("profile-name")?.textContent || "",
-                    phone: state.user?.phone || "",
+                    name: document.getElementById("profile-name")?.textContent || "Клієнт",
+                    phone: document.getElementById("profile-phone")?.value || "",
                     apartment: address,
                     items: state.cart,
                     comment: comment,
-                    service: orderService // <--- ВОТ НАША НОВАЯ СТРОЧКА!
+                    price: state.cart.reduce((sum, item) => sum + (item.price * item.quantity), 0),
+                    service: orderService 
                 })
             });
 
             const result = await response.json();
-            console.log(result);
 
-            if (tg?.HapticFeedback) {
-                tg.HapticFeedback.notificationOccurred("success");
+            if (response.ok) {
+                if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred("success");
+                
+                // Показываем алерт. Когда клиент нажмет "Ок", выполнится функция внутри:
+                Telegram.WebApp.showAlert(`Успіх! Замовлення оформлено.`, function() {
+                    state.cart = []; // Очищаем корзину
+                    updateCartUI();  // Обновляем счетчики
+                    showPage("home"); // Возвращаем на главный экран без закрытия Аппки!
+                });
+            } else {
+                Telegram.WebApp.showAlert("Помилка при створенні замовлення.");
             }
 
-            alert("🎉 Замовлення успішно оформлено!");
-
-            state.cart = [];
-            updateCartUI();
-            showPage("home");
-
         } catch (err) {
-            console.error(err);
-            alert("Помилка відправки замовлення");
+            console.error("Помилка:", err);
+            Telegram.WebApp.showAlert("Немає зв'язку з сервером. Перевірте інтернет.");
+        } finally {
+            // Возвращаем кнопку в исходное состояние
+            confirmOrderBtn.innerText = originalText;
+            confirmOrderBtn.disabled = false;
         }
     });
 }
 
 // ======================================
-// B2B Форма сотрудничества
+// B2B Форма сотрудничества (Отправка на сервер)
 // ======================================
 const b2bSubmitBtn = document.getElementById("b2b-submit-btn");
 if (b2bSubmitBtn) {
-    b2bSubmitBtn.addEventListener("click", () => {
-        const company = document.getElementById("b2b-company").value.trim();
-        const phone = document.getElementById("b2b-phone").value.trim();
-        const details = document.getElementById("b2b-details").value.trim();
-        
+    b2bSubmitBtn.addEventListener("click", async () => {
+        const companyEl = document.getElementById("b2b-company");
+        const phoneEl = document.getElementById("b2b-phone");
+        const detailsEl = document.getElementById("b2b-details");
+
+        const company = companyEl?.value.trim();
+        const phone = phoneEl?.value.trim();
+        const details = detailsEl?.value.trim() || "";
+
         if (!company || !phone) {
-            alert("Будь ласка, вкажіть назву компанії та контактний телефон.");
+            Telegram.WebApp.showAlert("Будь ласка, вкажіть назву компанії та контактний телефон.");
             return;
         }
-        
-        console.log("Нова B2B заявка:", { company, phone, details });
-        
-        if (tg && tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
-        
-        alert(`Дякуємо! Заявка для "${company}" прийнята. Наш менеджер зв'яжеться з вами найближчим часом для обговорення умов.`);
-        
-        document.getElementById("b2b-company").value = "";
-        document.getElementById("b2b-phone").value = "";
-        document.getElementById("b2b-details").value = "";
-        
-        showPage("home");
+
+        // Блокируем кнопку на время отправки
+        const originalText = b2bSubmitBtn.innerText;
+        b2bSubmitBtn.innerText = "Відправка...";
+        b2bSubmitBtn.disabled = true;
+
+        try {
+            const response = await fetch('/api/b2b', {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "ngrok-skip-browser-warning": "69420"
+                },
+                body: JSON.stringify({
+                    company: company,
+                    phone: phone,
+                    details: details,
+                    telegram_id: userId,
+                    name: document.getElementById("profile-name")?.textContent || ""
+                })
+            });
+
+            if (response.ok) {
+                if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+
+                Telegram.WebApp.showAlert(`Дякуємо! Заявку для "${company}" прийнято. Наш менеджер зв'яжеться з вами найближчим часом.`, function() {
+                    // Очищаем поля формы и переводим на главный экран
+                    if (companyEl) companyEl.value = "";
+                    if (phoneEl) phoneEl.value = "";
+                    if (detailsEl) detailsEl.value = "";
+                    showPage("home");
+                });
+            } else {
+                Telegram.WebApp.showAlert("Помилка при відправці заявки. Спробуйте ще раз.");
+            }
+        } catch (error) {
+            console.error("Помилка B2B:", error);
+            Telegram.WebApp.showAlert("Немає зв'язку з сервером. Перевірте інтернет.");
+        } finally {
+            b2bSubmitBtn.innerText = originalText;
+            b2bSubmitBtn.disabled = false;
+        }
     });
 }
 
@@ -612,7 +656,7 @@ if (safeTg && safeTg.initDataUnsafe && safeTg.initDataUnsafe.user) {
 
 async function fetchCabinetData() {
     try {
-        const response = await fetch(`${NGROK_URL}/api/cabinet?user_id=${userId}`, {
+        const response = await fetch(`/api/cabinet?user_id=${userId}`, {
             method: 'GET',
             headers: { "ngrok-skip-browser-warning": "69420" }
         });
@@ -723,4 +767,295 @@ async function saveProfileData() {
     } catch (error) {
         console.error("Ошибка при сохранении:", error);
     }
+}
+// ======================================
+// AI Чат Консультант
+// ======================================
+const aiInput = document.getElementById("ai-input");
+const aiSendBtn = document.getElementById("ai-send-btn");
+const aiMessages = document.getElementById("ai-messages");
+
+async function sendAiMessage(textToSend = null) {
+    const text = textToSend || aiInput?.value.trim();
+    if (!text) return;
+
+    if (aiInput) aiInput.value = "";
+
+    // 1. Рендерим сообщение пользователя
+    appendMessage(text, 'user');
+
+    // 2. Рендерим индикатор загрузки ("ИИ печатает...")
+    const loadingId = appendLoadingBubble();
+
+    try {
+        const response = await fetch('/api/ai', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'ngrok-skip-browser-warning': '69420'
+            },
+            body: JSON.stringify({
+                message: text,
+                telegram_id: userId
+            })
+        });
+
+        const data = await response.json();
+        
+        // Удаляем индикатор загрузки
+        removeMessage(loadingId);
+
+        if (response.ok && data.reply) {
+            appendMessage(data.reply, 'ai');
+            if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+        } else {
+            appendMessage("Вибачте, сталася помилка. Спробуйте ще раз пізніше.", 'ai');
+        }
+
+    } catch (error) {
+        console.error("Ошибка AI:", error);
+        removeMessage(loadingId);
+        appendMessage("Немає зв'язку з сервером AI.", 'ai');
+    }
+}
+
+// Вспомогательная функция отрисовки пупырок
+function appendMessage(text, sender) {
+    if (!aiMessages) return;
+
+    const bubble = document.createElement("div");
+    const isUser = sender === 'user';
+    
+    bubble.className = isUser 
+        ? "bg-blue-600 text-white p-3.5 rounded-[20px] rounded-tr-sm text-sm shadow-sm max-w-[85%] self-end leading-relaxed animate-fade-in"
+        : "bg-white p-3.5 rounded-[20px] rounded-tl-sm text-sm text-gray-800 shadow-sm border border-gray-100 max-w-[85%] self-start leading-relaxed animate-fade-in";
+
+    // Превращаем переносы строк \n в html теги <br>
+    bubble.innerHTML = text.replace(/\n/g, '<br>');
+    aiMessages.appendChild(bubble);
+    
+    // Скроллим вниз
+    aiMessages.scrollTop = aiMessages.scrollHeight;
+}
+
+// Индикатор "Печатает..."
+function appendLoadingBubble() {
+    const id = "loading-" + Date.now();
+    const bubble = document.createElement("div");
+    bubble.id = id;
+    bubble.className = "bg-white p-3.5 rounded-[20px] rounded-tl-sm text-sm text-gray-400 shadow-sm border border-gray-100 max-w-[40%] self-start flex items-center gap-1.5";
+    bubble.innerHTML = `<span>Консультант думає</span><span class="animate-bounce">...</span>`;
+    aiMessages.appendChild(bubble);
+    aiMessages.scrollTop = aiMessages.scrollHeight;
+    return id;
+}
+
+function removeMessage(id) {
+    const el = document.getElementById(id);
+    if (el) el.remove();
+}
+
+// События клика и нажатия Enter
+if (aiSendBtn) aiSendBtn.addEventListener("click", () => sendAiMessage());
+if (aiInput) {
+    aiInput.addEventListener("keypress", (e) => {
+        if (e.key === 'Enter') sendAiMessage();
+    });
+}
+
+// Обработка клика по быстрым чипсам-вопросам
+document.querySelectorAll(".ai-chip").forEach(btn => {
+    btn.addEventListener("click", () => {
+        const text = btn.innerText.replace(/^[^\s]+\s/, ''); // удаляем эмодзи с начала
+        sendAiMessage(text);
+    });
+});
+// ======================================
+// ЛИЧНЫЙ КАБИНЕТ (Логика и рендеринг)
+// ======================================
+
+// 1. Загрузка и отрисовка данных кабинета
+async function loadCabinetData() {
+    const container = document.getElementById("orders-list-container");
+    if (!container) return;
+
+    try {
+        const response = await fetch(`/api/cabinet?user_id=${userId}`, {
+            headers: { 'ngrok-skip-browser-warning': '69420' }
+        });
+
+        if (!response.ok) throw new Error("Помилка завантаження кабинета");
+
+        const data = await response.json();
+        const client = data.client || {};
+        const orders = data.orders || [];
+
+        // --- Отрисовка данных профиля ---
+        const name = client.name || tg?.initDataUnsafe?.user?.first_name || "Клієнт";
+        const phone = client.phone || "Телефон не вказано";
+        const apt = client.apartment ? `кв. ${client.apartment}` : "Квартира не вказана";
+
+        document.getElementById("profile-display-name").textContent = name;
+        document.getElementById("profile-display-phone").textContent = phone;
+        document.getElementById("profile-display-apt").textContent = apt;
+        document.getElementById("user-avatar-initials").textContent = name.charAt(0).toUpperCase();
+
+        // Поля ввода в форме редактирования
+        document.getElementById("edit-name").value = client.name || "";
+        document.getElementById("edit-phone").value = client.phone || "";
+        document.getElementById("edit-apt").value = client.apartment || "";
+
+        // Скидка
+        if (client.discount > 0) {
+            document.getElementById("profile-discount-badge").textContent = `Знижка ${client.discount}%`;
+        }
+
+        // --- Отрисовка заказов ---
+        renderOrdersList(orders);
+
+    } catch (error) {
+        console.error("Ошибка кабинета:", error);
+        container.innerHTML = `
+            <div class="bg-white rounded-[20px] p-6 text-center text-red-500 text-sm border border-gray-100">
+                Не вдалося завантажити дані. Перевірте інтернет.
+            </div>
+        `;
+    }
+}
+
+// 2. Генерация списка карточек заказов
+function renderOrdersList(orders) {
+    const container = document.getElementById("orders-list-container");
+    if (!container) return;
+
+    if (!orders || orders.length === 0) {
+        container.innerHTML = `
+            <div class="bg-white rounded-[24px] p-8 text-center border border-gray-100 shadow-sm">
+                <div class="text-4xl mb-2">🧺</div>
+                <h4 class="font-bold text-gray-800 text-sm mb-1">У вас поки немає замовлень</h4>
+                <p class="text-xs text-gray-400 mb-4">Оформіть ваше перше замовлення пральні або ательє!</p>
+                <button onclick="showPage('home')" class="bg-blue-50 text-blue-600 font-bold px-4 py-2 rounded-full text-xs active:scale-95 transition">
+                    До каталогу
+                </button>
+            </div>
+        `;
+        return;
+    }
+
+    // Собираем карточки заказов
+    container.innerHTML = orders.map(order => {
+        const isAtelier = order.type === 'atelier';
+        const icon = isAtelier ? '✂️' : '🫧';
+        const typeTitle = isAtelier ? 'Ательє' : 'Пральня';
+        
+        // Определяем цвет и иконку статуса
+        let statusBg = "bg-gray-100 text-gray-600";
+        const statusText = order.status || "Прийнято";
+
+        if (statusText.includes("Готово") || statusText.includes("Видано")) {
+            statusBg = "bg-emerald-50 text-emerald-600 border border-emerald-100";
+        } else if (statusText.includes("пранн") || statusText.includes("робот")) {
+            statusBg = "bg-blue-50 text-blue-600 border border-blue-100";
+        } else if (statusText.includes("огляд") || statusText.includes("Узгодження")) {
+            statusBg = "bg-amber-50 text-amber-600 border border-amber-100";
+        }
+
+        return `
+            <div class="bg-white rounded-[20px] p-4 border border-gray-100 shadow-sm space-y-3">
+                <!-- Шапка карточки -->
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                        <span class="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center text-sm shadow-inner">
+                            ${icon}
+                        </span>
+                        <div>
+                            <span class="text-xs font-bold text-gray-800">№ ${order.id}</span>
+                            <span class="text-[10px] text-gray-400 block">${order.date || ''}</span>
+                        </div>
+                    </div>
+                    <span class="text-xs font-semibold px-2.5 py-1 rounded-full ${statusBg}">
+                        ${statusText}
+                    </span>
+                </div>
+
+                <!-- Содержимое (вещи/услуги) -->
+                <div class="bg-gray-50/70 rounded-[12px] p-2.5 text-xs text-gray-700 leading-relaxed">
+                    ${order.items || 'Послуги'}
+                </div>
+
+                <!-- Сумма -->
+                <div class="flex justify-between items-center pt-1 text-xs">
+                    <span class="text-gray-400">Сума:</span>
+                    <span class="font-bold text-gray-900 text-sm">${order.price}</span>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+// 3. Открытие/закрытие формы редактирования
+const toggleEditBtn = document.getElementById("toggle-edit-profile-btn");
+const editForm = document.getElementById("edit-profile-form");
+
+if (toggleEditBtn && editForm) {
+    toggleEditBtn.addEventListener("click", () => {
+        editForm.classList.toggle("hidden");
+    });
+}
+
+// 4. Сохранение профиля
+const saveProfileBtn = document.getElementById("save-profile-btn");
+if (saveProfileBtn) {
+    saveProfileBtn.addEventListener("click", async () => {
+        const name = document.getElementById("edit-name").value.trim();
+        const phone = document.getElementById("edit-phone").value.trim();
+        const apt = document.getElementById("edit-apt").value.trim();
+
+        if (!name || !phone) {
+            Telegram.WebApp.showAlert("Будь ласка, вкажіть ім'я та телефон.");
+            return;
+        }
+
+        saveProfileBtn.innerText = "Збереження...";
+        saveProfileBtn.disabled = true;
+
+        try {
+            const response = await fetch('/api/cabinet', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'ngrok-skip-browser-warning': '69420'
+                },
+                body: JSON.stringify({
+                    telegram_id: userId,
+                    first_name: name,
+                    phone: phone,
+                    apartment: apt
+                })
+            });
+
+            if (response.ok) {
+                if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+                Telegram.WebApp.showAlert("Профіль успішно оновлено!");
+                editForm.classList.add("hidden");
+                loadCabinetData(); // Перерисовываем
+            } else {
+                Telegram.WebApp.showAlert("Помилка збереження.");
+            }
+        } catch (e) {
+            console.error("Помилка сохранения профиля:", e);
+        } finally {
+            saveProfileBtn.innerText = "Зберегти зміни";
+            saveProfileBtn.disabled = false;
+        }
+    });
+}
+
+// 5. Кнопка ручного обновления списка
+const refreshBtn = document.getElementById("refresh-orders-btn");
+if (refreshBtn) {
+    refreshBtn.addEventListener("click", () => {
+        if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+        loadCabinetData();
+    });
 }
