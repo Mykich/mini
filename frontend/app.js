@@ -750,13 +750,12 @@ async function saveProfileData() {
 
     try {
         const response = await fetch(`${NGROK_URL}/api/cabinet`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "ngrok-skip-browser-warning": "69420"
-            },
-            body: JSON.stringify(payload)
-        });
+    method: "POST",
+    headers: {
+        "Content-Type": "application/json"
+    },
+    body: JSON.stringify(payload)
+});
 
         const result = await response.json();
         console.log("Ответ от сервера при сохранении:", result);
