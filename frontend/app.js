@@ -879,8 +879,8 @@ async function loadCabinetData() {
     if (!container) return;
 
     try {
-        const response = await fetch(`/api/cabinet?user_id=${userId}`, {
-            headers: { 'ngrok-skip-browser-warning': '69420' }
+        const response = await fetch(`${NGROK_URL}/api/cabinet?user_id=${userId}`, {
+            method: 'GET'
         });
 
         if (!response.ok) throw new Error("Помилка завантаження кабинета");
