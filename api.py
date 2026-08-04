@@ -36,6 +36,18 @@ def send_tg_message(chat_id, text):
         print(f"⚠️ Ошибка сети при отправке ТГ: {e}")
 
 app = FastAPI()
+
+app = FastAPI()
+
+# Разрешаем твоему GitHub Pages общаться с Render
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["https://mykich.github.io"], # Важно: без слеша в конце!
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 from fastapi.middleware.cors import CORSMiddleware
 # --- Настройка CORS ---
 app.add_middleware(
@@ -481,4 +493,6 @@ for route in app.routes:
    
 
     if __name__ == "__main__":
-        uvicorn.run(app, host="127.0.0.1", port=8000)
+        # Render сам выдает нужный порт
+        port = int(os.environ.get("PORT", 10000))
+        uvicorn.run(app, host="0.0.0.0", port=port)
