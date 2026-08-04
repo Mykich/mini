@@ -481,18 +481,8 @@ async def ai_chat(data: AIMessageData):
         raise HTTPException(status_code=500, detail=str(e))
 
 import os
-from fastapi.staticfiles import StaticFiles
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-FRONTEND_DIR = os.path.join(BASE_DIR, "frontend")
-
-
-# Вот тут меняем "frontend" на FRONTEND_DIR без кавычек!
-app.mount("/", StaticFiles(directory=FRONTEND_DIR, html=True), name="frontend")
-for route in app.routes:
-   
-
-    if __name__ == "__main__":
-        # Render сам выдает нужный порт
-        port = int(os.environ.get("PORT", 10000))
-        uvicorn.run(app, host="0.0.0.0", port=port)
+if __name__ == "__main__":
+    # Render сам выдает нужный порт
+    port = int(os.environ.get("PORT", 10000))
+    uvicorn.run(app, host="0.0.0.0", port=port)
