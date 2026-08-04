@@ -646,7 +646,7 @@ if (b2bSubmitBtn) {
 // ======================================
 // Связь с сервером Python (ngrok)
 // ======================================
-const NGROK_URL = "https://shrouded-curfew-quintet.ngrok-free.dev";
+const NGROK_URL = "https://pralnya.onrender.com"; 
 const safeTg = window.Telegram ? window.Telegram.WebApp : null;
 
 let userId = 123456789;
