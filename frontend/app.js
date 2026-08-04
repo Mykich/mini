@@ -656,9 +656,8 @@ if (safeTg && safeTg.initDataUnsafe && safeTg.initDataUnsafe.user) {
 
 async function fetchCabinetData() {
     try {
-        const response = await fetch(`/api/cabinet?user_id=${userId}`, {
-            method: 'GET',
-            headers: { "ngrok-skip-browser-warning": "69420" }
+        const response = await fetch(`${NGROK_URL}/api/cabinet?user_id=${userId}`, {
+            method: 'GET'
         });
         
         if (!response.ok) throw new Error(`Ошибка HTTP: ${response.status}`);
