@@ -6,7 +6,7 @@ import requests
 
 from fastapi.staticfiles import StaticFiles
 
-from fastapi import FastAPI, HTTPException
+from fastapi import APIRouter, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Optional, Any
@@ -35,27 +35,11 @@ def send_tg_message(chat_id, text):
     except Exception as e:
         print(f"⚠️ Ошибка сети при отправке ТГ: {e}")
 
-app = FastAPI()
+router = APIRouter()
 
-app = FastAPI()
-
-# Разрешаем твоему GitHub Pages общаться с Render
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["https://mykich.github.io"], # Важно: без слеша в конце!
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-from fastapi.middleware.cors import CORSMiddleware
-# --- Настройка CORS ---
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+# --- 1. GET: Загрузка кабинета ---
+@router.get("/api/cabinet")
+async def get_cabinet(user_id: int):
 
 # --- Подключение к Google Таблицам ---
 SCOPE = [
