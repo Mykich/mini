@@ -35,11 +35,10 @@ def send_tg_message(chat_id, text):
     except Exception as e:
         print(f"⚠️ Ошибка сети при отправке ТГ: {e}")
 
-router = APIRouter()
+
 
 # --- 1. GET: Загрузка кабинета ---
-@router.get("/api/cabinet")
-async def get_cabinet(user_id: int):
+
 
 # --- Подключение к Google Таблицам ---
 SCOPE = [
@@ -89,6 +88,8 @@ class B2BData(BaseModel):
 class AIMessageData(BaseModel):
     message: str
     telegram_id: Optional[Any] = None
+    
+router = APIRouter()
 
 # --- 1. GET: Загрузка кабинета ---
 @app.get("/api/cabinet")
