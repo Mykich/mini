@@ -6,13 +6,25 @@ import requests
 
 from fastapi.staticfiles import StaticFiles
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Optional, Any
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
+app = FastAPI()
 
+origins = [
+    "https://mykich.github.io",
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 # === Уведомление клиенту ===
 TELEGRAM_TOKEN = "7779234071:AAFErwDEU8-gobibHl_M94je9nbvs5DwIS4" 
 ADMIN_CHAT_ID = "987895270" 
@@ -36,6 +48,8 @@ def send_tg_message(chat_id, text):
         print(f"⚠️ Ошибка сети при отправке ТГ: {e}")
 
 
+
+# === Уведомление клиенту ===
 
 # --- 1. GET: Загрузка кабинета ---
 
