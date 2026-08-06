@@ -14,6 +14,13 @@ import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 app = FastAPI()
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 # === Уведомление клиенту ===
 TELEGRAM_TOKEN = "7779234071:AAFErwDEU8-gobibHl_M94je9nbvs5DwIS4" 
 ADMIN_CHAT_ID = "987895270" 
