@@ -536,7 +536,7 @@ if (confirmOrderBtn) {
         confirmOrderBtn.disabled = true;
 
         try {
-            const response = await fetch('/api/order', {
+            const response = await fetch(`${NGROK_URL}/api/order`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -605,7 +605,7 @@ if (b2bSubmitBtn) {
         b2bSubmitBtn.disabled = true;
 
         try {
-            const response = await fetch('/api/b2b', {
+            const response = await fetch(`${NGROK_URL}/api/b2b`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -786,7 +786,7 @@ async function sendAiMessage(textToSend = null) {
     const loadingId = appendLoadingBubble();
 
     try {
-        const response = await fetch('/api/ai', {
+        const response = await fetch(`${NGROK_URL}/api/ai`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -1018,7 +1018,7 @@ if (saveProfileBtn) {
         saveProfileBtn.disabled = true;
 
         try {
-            const response = await fetch('/api/cabinet', {
+            const response = await fetch(`${NGROK_URL}/api/cabinet`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
