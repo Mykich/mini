@@ -551,6 +551,7 @@ if (confirmOrderBtn) {
                     ? ""
                     : (document.getElementById("profile-display-phone")?.textContent?.trim() || ""),
                     apartment: address,
+                    address: address,
                     items: state.cart,
                     comment: comment,
                     price: state.cart.reduce((sum, item) => sum + (item.price * item.quantity), 0),
