@@ -544,8 +544,12 @@ if (confirmOrderBtn) {
                 },
                 body: JSON.stringify({
                     telegram_id: userId,
-                    name: document.getElementById("profile-name")?.textContent || "Клієнт",
-                    phone: document.getElementById("profile-phone")?.value || "",
+                    name: document.getElementById("profile-display-name")?.textContent?.trim() || 
+                    window.Telegram?.WebApp?.initDataUnsafe?.user?.first_name || 
+                    "Клієнт",
+                    phone: (document.getElementById("profile-display-phone")?.textContent?.trim() === "Телефон не вказано")
+                    ? ""
+                    : (document.getElementById("profile-display-phone")?.textContent?.trim() || ""),
                     apartment: address,
                     items: state.cart,
                     comment: comment,
