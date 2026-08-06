@@ -82,6 +82,7 @@ class OrderData(BaseModel):
     phone: Optional[str] = ""
     name: Optional[str] = ""
     address: Optional[str] = ""
+    apartment: Optional[str] = ""
     items: Optional[Any] = ""
     service: Optional[str] = ""
     price: Optional[Any] = 0
