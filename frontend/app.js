@@ -518,7 +518,7 @@ if (confirmOrderBtn) {
             return;
         }
 
-        const address = document.getElementById("checkout-address").value.trim();
+        const address = document.getElementById("checkout-address")?.value.trim() || "";
         if (!address) {
             Telegram.WebApp.showAlert("Будь ласка, введіть квартиру");
             return;
@@ -526,7 +526,24 @@ if (confirmOrderBtn) {
 
         const comment = document.getElementById("checkout-comment")?.value || "";
 
-        // === ОПРЕДЕЛЯЕМ ТИП УСЛУГИ (Ателье или Прачечная) ===
+        // === 1. Собираем имя (если в HTML висит заглушка "Клієнт", берем из Telegram) ===
+        const tgUser = window.Telegram?.WebApp?.initDataUnsafe?.user;
+        let rawName = document.getElementById("profile-display-name")?.textContent?.trim();
+        
+        let clientName = rawName;
+        if (!rawName || rawName === "Клієнт") {
+            const firstName = tgUser?.first_name || "";
+            const lastName = tgUser?.last_name || "";
+            clientName = `${firstName} ${lastName}`.trim() || "Клієнт";
+        }
+
+        // === 2. Собираем телефон (проверяем плашку и поле ввода) ===
+        let clientPhone = document.getElementById("profile-display-phone")?.textContent?.trim() || "";
+        if (!clientPhone || clientPhone === "Телефон не вказано") {
+            clientPhone = document.getElementById("edit-phone")?.value?.trim() || "";
+        }
+
+        // === 3. Определяем тип услуги (Ателье или Прачечная) ===
         const isAtelier = state.cart.some(item => item.service === 'atelier');
         const orderService = isAtelier ? 'atelier' : 'laundry';
 
@@ -544,14 +561,10 @@ if (confirmOrderBtn) {
                 },
                 body: JSON.stringify({
                     telegram_id: userId,
-                    name: document.getElementById("profile-display-name")?.textContent?.trim() || 
-                    window.Telegram?.WebApp?.initDataUnsafe?.user?.first_name || 
-                    "Клієнт",
-                    phone: (document.getElementById("profile-display-phone")?.textContent?.trim() === "Телефон не вказано")
-                    ? ""
-                    : (document.getElementById("profile-display-phone")?.textContent?.trim() || ""),
+                    name: clientName,
+                    phone: clientPhone,
                     apartment: address,
-                    address: address,
+                    address: address, // Передаем дубль на случай разницы в api.py
                     items: state.cart,
                     comment: comment,
                     price: state.cart.reduce((sum, item) => sum + (item.price * item.quantity), 0),
@@ -564,11 +577,10 @@ if (confirmOrderBtn) {
             if (response.ok) {
                 if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred("success");
                 
-                // Показываем алерт. Когда клиент нажмет "Ок", выполнится функция внутри:
                 Telegram.WebApp.showAlert(`Успіх! Замовлення оформлено.`, function() {
                     state.cart = []; // Очищаем корзину
                     updateCartUI();  // Обновляем счетчики
-                    showPage("home"); // Возвращаем на главный экран без закрытия Аппки!
+                    showPage("home"); // Возвращаем на главный экран
                 });
             } else {
                 Telegram.WebApp.showAlert("Помилка при створенні замовлення.");
@@ -578,7 +590,6 @@ if (confirmOrderBtn) {
             console.error("Помилка:", err);
             Telegram.WebApp.showAlert("Немає зв'язку з сервером. Перевірте інтернет.");
         } finally {
-            // Возвращаем кнопку в исходное состояние
             confirmOrderBtn.innerText = originalText;
             confirmOrderBtn.disabled = false;
         }
