@@ -537,10 +537,17 @@ if (confirmOrderBtn) {
             clientName = `${firstName} ${lastName}`.trim() || "Клієнт";
         }
 
-        // === 2. Собираем телефон (проверяем плашку и поле ввода) ===
+        // === 2. Собираем телефон (с учетом пустой маски) ===
         let clientPhone = document.getElementById("profile-display-phone")?.textContent?.trim() || "";
-        if (!clientPhone || clientPhone === "Телефон не вказано") {
+        
+        // Если это заглушка или пустая маска, пробуем взять из поля редактирования
+        if (!clientPhone || clientPhone === "Телефон не вказано" || clientPhone.includes("--")) {
             clientPhone = document.getElementById("edit-phone")?.value?.trim() || "";
+        }
+        
+        // Если и там пустая маска, то превращаем в абсолютную пустоту
+        if (clientPhone.includes("--")) {
+            clientPhone = ""; 
         }
 
         // === 3. Определяем тип услуги (Ателье или Прачечная) ===
@@ -918,7 +925,10 @@ async function loadCabinetData() {
         document.getElementById("edit-name").value = client.name || "";
         document.getElementById("edit-phone").value = client.phone || "";
         document.getElementById("edit-apt").value = client.apartment || "";
-
+        const checkoutAddressInput = document.getElementById("checkout-address");
+        if (checkoutAddressInput && client.apartment) {
+            checkoutAddressInput.value = client.apartment;
+        }
         // Скидка
         if (client.discount > 0) {
             document.getElementById("profile-discount-badge").textContent = `Знижка ${client.discount}%`;
