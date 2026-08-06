@@ -646,7 +646,7 @@ if (b2bSubmitBtn) {
 // ======================================
 // Связь с сервером Python (ngrok)
 // ======================================
-const NGROK_URL = "https://pralnya.onrender.com"; 
+const NGROK_URL = "https://mini-mrip.onrender.com"; 
 const safeTg = window.Telegram ? window.Telegram.WebApp : null;
 
 let userId = 123456789;
