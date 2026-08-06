@@ -12,6 +12,7 @@ from pydantic import BaseModel
 from typing import Optional, Any
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
+app = FastAPI()
 
 # === Уведомление клиенту ===
 TELEGRAM_TOKEN = "7779234071:AAFErwDEU8-gobibHl_M94je9nbvs5DwIS4" 
