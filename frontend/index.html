@@ -888,10 +888,12 @@ shadow-xl">
     </button>
 </div>
 <!-- Плаваюча кнопка AI -->
-<button id="ai-toggle-btn" 
-        class="fixed bottom-28 right-5 w-14 h-14 bg-blue-600 rounded-full shadow-xl z-[100] cursor-pointer active:scale-95 transition-transform border-0" 
-        style="background-image: url('./simple-bot.png'); background-size: 230%; background-position: center; background-repeat: no-repeat;">
-</button>
+<div class="fixed bottom-28 right-5 z-[9999]">
+    <button id="ai-toggle-btn" class="relative w-14 h-14 bg-blue-600 rounded-full shadow-xl border-0 p-0 cursor-pointer active:scale-95 transition-transform overflow-hidden block">
+        <!-- Слой с картинкой, который не блокирует клики -->
+        <div class="absolute inset-0 bg-no-repeat bg-center pointer-events-none" style="background-image: url('./simple-bot.png'); background-size: 230%;"></div>
+    </button>
+</div>
 <script src="data.js"></script>
 <script src="services.js"></script>
 <script src="app.js?v=11"></script>
