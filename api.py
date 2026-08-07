@@ -7,7 +7,7 @@ import os
 from openai import AsyncOpenAI
 from fastapi.staticfiles import StaticFiles
 
-from fastapi import APIRouter, FastAPI, HTTPException
+from fastapi import APIRouter, FastAPI, HTTPException, Body
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Optional, Any
@@ -49,32 +49,7 @@ SYSTEM_PROMPT = """Ти — преміальний AI-консультант е�
 - Не вигадуй невідомі ціни. Якщо послуги немає в прайсі — кажи, що треба спитати в менеджера.
 - Завжди спрямовуй клієнта на оформлення замовлення прямо в додатку."""
 
-@app.post("/api/ai")
-async def ai_chat(data: AIMessageData):
-    try:
-        # Проверяем, есть ли вообще ключ
-        if not os.getenv("OPENAI_API_KEY"):
-            return {"status": "success", "reply": "Вибачте, мій AI-модуль наразі налаштовується. Будь ласка, зверніться до менеджера або скористайтеся меню!"}
 
-        # Отправляем запрос в OpenAI
-        response = await aclient.chat.completions.create(
-            model="gpt-3.5-turbo", # Працює швидко і дешево, для консультанта ідеально
-            messages=[
-                {"role": "system", "content": SYSTEM_PROMPT},
-                {"role": "user", "content": data.message}
-            ],
-            temperature=0.7, # Трохи креативності, але без фантазій
-            max_tokens=250   # Обмежуємо довжину відповіді, щоб він був лаконічним
-        )
-
-        reply = response.choices[0].message.content
-
-        return {"status": "success", "reply": reply}
-
-    except Exception as e:
-        print(f"❌ Помилка AI: {e}")
-        # Якщо сталася помилка на стороні OpenAI, віддаємо клієнту красиву заглушку
-        return {"status": "success", "reply": "Зараз я трохи перевантажений замовленнями 🧺. Будь ласка, зателефонуйте нашому менеджеру!"}
 
 def send_tg_message(chat_id, text):
     """Функция для отправки сообщений через Telegram API"""
@@ -147,11 +122,38 @@ class B2BData(BaseModel):
     name: Optional[str] = ""
 
 class AIMessageData(BaseModel):
-    message: str
+    message: str = ""
     telegram_id: Optional[Any] = None
     
 router = APIRouter()
 
+@app.post("/api/ai")
+async def ai_chat(data: AIMessageData):
+    try:
+        # Проверяем, есть ли вообще ключ
+        if not os.getenv("OPENAI_API_KEY"):
+            return {"status": "success", "reply": "Вибачте, мій AI-модуль наразі налаштовується. Будь ласка, зверніться до менеджера або скористайтеся меню!"}
+
+        # Отправляем запрос в OpenAI
+        response = await aclient.chat.completions.create(
+            model="gpt-3.5-turbo", # Працює швидко і дешево, для консультанта ідеально
+            messages=[
+                {"role": "system", "content": SYSTEM_PROMPT},
+                {"role": "user", "content": data.message}
+            ],
+            temperature=0.7, # Трохи креативності, але без фантазій
+            max_tokens=250   # Обмежуємо довжину відповіді, щоб він був лаконічним
+        )
+
+        reply = response.choices[0].message.content
+
+        return {"status": "success", "reply": reply}
+
+    except Exception as e:
+        print(f"❌ Помилка AI: {e}")
+        # Якщо сталася помилка на стороні OpenAI, віддаємо клієнту красиву заглушку
+        return {"status": "success", "reply": "Зараз я трохи перевантажений замовленнями 🧺. Будь ласка, зателефонуйте нашому менеджеру!"}
+    
 # --- 1. GET: Загрузка кабинета ---
 @app.get("/api/cabinet")
 async def get_cabinet(user_id: int):
