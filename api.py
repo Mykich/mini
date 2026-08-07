@@ -3,7 +3,8 @@ from datetime import datetime
 import traceback
 import json # Добавь в самый верх файла, если еще нет
 import requests
-
+import os
+from openai import AsyncOpenAI
 from fastapi.staticfiles import StaticFiles
 
 from fastapi import APIRouter, FastAPI, HTTPException
@@ -25,6 +26,56 @@ app.add_middleware(
 TELEGRAM_TOKEN = "7779234071:AAFErwDEU8-gobibHl_M94je9nbvs5DwIS4" 
 ADMIN_CHAT_ID = "987895270" 
 
+# === АИ Асистент ===
+aclient = AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
+SYSTEM_PROMPT = """Ти — преміальний AI-консультант елітної пральні та ательє "PralnyaVdoma" (Київ, вул. Бульварно-Кудрявська, 17-А).
+
+Стиль спілкування: Ввічливий консьєрж 5-зіркового готелю. 
+❗️ ГОЛОВНЕ ПРАВИЛО: Пиши максимально КРАТКО, ЛАКОНІЧНО і ПО СУТІ. Жодної «води», довгих вступів та розлогих описів. Тільки конструктивні відповіді в 1-3 речення, якщо це можливо. Форматуй текст красиво (використовуй емодзі та списки).
+
+Експертиза (використовуй точково, без зайвих деталей):
+1. Пуховики та зимовий одяг: Експертиза преміум-рівня (як у ienki-ienki) — дбайливий догляд за пухом, відновлення об'єму.
+2. Хімія: Преміальна гіпоалергенна хімія без різких запахів.
+3. Обладнання: Професійні машини IPSO та Danube.
+
+Орієнтовні ціни:
+- Сорочка / футболка: 80 ₴
+- Штани / джинси: 120 ₴
+- Зимові куртки / пуховики: від 350 ₴
+- Ательє: індивідуальний прорахунок після огляду майстром.
+
+Правила:
+- Не вигадуй невідомі ціни. Якщо послуги немає в прайсі — кажи, що треба спитати в менеджера.
+- Завжди спрямовуй клієнта на оформлення замовлення прямо в додатку."""
+
+@app.post("/api/ai")
+async def ai_chat(data: AIMessageData):
+    try:
+        # Проверяем, есть ли вообще ключ
+        if not os.getenv("OPENAI_API_KEY"):
+            return {"status": "success", "reply": "Вибачте, мій AI-модуль наразі налаштовується. Будь ласка, зверніться до менеджера або скористайтеся меню!"}
+
+        # Отправляем запрос в OpenAI
+        response = await aclient.chat.completions.create(
+            model="gpt-3.5-turbo", # Працює швидко і дешево, для консультанта ідеально
+            messages=[
+                {"role": "system", "content": SYSTEM_PROMPT},
+                {"role": "user", "content": data.message}
+            ],
+            temperature=0.7, # Трохи креативності, але без фантазій
+            max_tokens=250   # Обмежуємо довжину відповіді, щоб він був лаконічним
+        )
+
+        reply = response.choices[0].message.content
+
+        return {"status": "success", "reply": reply}
+
+    except Exception as e:
+        print(f"❌ Помилка AI: {e}")
+        # Якщо сталася помилка на стороні OpenAI, віддаємо клієнту красиву заглушку
+        return {"status": "success", "reply": "Зараз я трохи перевантажений замовленнями 🧺. Будь ласка, зателефонуйте нашому менеджеру!"}
+
 def send_tg_message(chat_id, text):
     """Функция для отправки сообщений через Telegram API"""
     if not chat_id:
@@ -45,7 +96,6 @@ def send_tg_message(chat_id, text):
 
 
 
-# === Уведомление клиенту ===
 
 # --- 1. GET: Загрузка кабинета ---
 
