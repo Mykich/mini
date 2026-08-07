@@ -1051,10 +1051,9 @@ if (saveProfileBtn) {
                     'ngrok-skip-browser-warning': '69420'
                 },
                 body: JSON.stringify({
-                    telegram_id: userId,
-                    first_name: name,
-                    phone: phone,
-                    apartment: apt
+                message: String(text || ""),
+                telegram_id: userId ? String(userId) : null
+            
                 })
             });
 
