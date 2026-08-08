@@ -508,6 +508,6 @@ def format_price(val):
 import os
 
 if __name__ == "__main__":
-    # Render сам выдает нужный порт
+    # Ловим порт, который выдает Render, либо ставим 10000 для локальных тестов
     port = int(os.environ.get("PORT", 10000))
     uvicorn.run(app, host="0.0.0.0", port=port)
