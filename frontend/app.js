@@ -1082,3 +1082,34 @@ if (refreshBtn) {
         loadCabinetData();
     });
 }
+
+window.openAIPage = function() {
+    // 1. Скрываем все возможные страницы (main и section), которые есть в твоем index_2.html
+    const allPages = [
+        'home-page', 
+        'order-page', 
+        'orders-page', 
+        'atelier-page', 
+        'b2b-page', 
+        'checkout-page', 
+        'cabinet-page'
+    ];
+    
+    allPages.forEach(pageId => {
+        const pageElement = document.getElementById(pageId);
+        if (pageElement) {
+            pageElement.classList.add('hidden');
+        }
+    });
+    
+    // 2. Принудительно показываем секцию AI
+    const aiPage = document.getElementById('ai-page');
+    if (aiPage) {
+        aiPage.classList.remove('hidden');
+    }
+    
+    // 3. Снимаем активный класс с кнопок нижнего меню (чтобы было видно, что мы не на главной)
+    document.querySelectorAll('.nav-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+};
