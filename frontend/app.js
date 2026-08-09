@@ -755,39 +755,39 @@ fetchCabinetData();
 // Сохранение данных профиля (POST на сервер)
 // ======================================
 async function saveProfileData() {
-    // Если у тебя пока нет поля для телефона в шторке, оставим его пустым
-    const phoneInput = document.getElementById("profile-phone"); 
-    
-    // БЕРЕМ ДАННЫЕ ИЗ ТВОЕЙ ШТОРКИ
-    const apartmentInput = document.getElementById("address-input"); 
-    
-    const currentUserId = safeTg && safeTg.initDataUnsafe && safeTg.initDataUnsafe.user ? safeTg.initDataUnsafe.user.id : 123456789;
-    const currentFirstName = safeTg && safeTg.initDataUnsafe && safeTg.initDataUnsafe.user ? safeTg.initDataUnsafe.user.first_name : "Ігор";
+    // Если у тебя пока нет поля для телефона в шторке, оставим его пустым
+    const phoneInput = document.getElementById("profile-phone"); 
+    
+    // БЕРЕМ ДАННЫЕ ИЗ ТВОЕЙ ШТОРКИ
+    const apartmentInput = document.getElementById("address-input"); 
+    
+    const currentUserId = safeTg && safeTg.initDataUnsafe && safeTg.initDataUnsafe.user ? safeTg.initDataUnsafe.user.id : 123456789;
+    const currentFirstName = safeTg && safeTg.initDataUnsafe && safeTg.initDataUnsafe.user ? safeTg.initDataUnsafe.user.first_name : "Ігор";
 
-    const payload = {
-        telegram_id: currentUserId,
-        first_name: currentFirstName,
-        phone: phoneInput ? phoneInput.value : "",
-        apartment: apartmentInput ? apartmentInput.value : ""
-    };
+    const payload = {
+        telegram_id: currentUserId,
+        first_name: currentFirstName,
+        phone: phoneInput ? phoneInput.value : "",
+        apartment: apartmentInput ? apartmentInput.value : ""
+    };
 
-    try {
-        const response = await fetch(`${NGROK_URL}/api/cabinet`, {
-    method: "POST",
-    headers: {
-        "Content-Type": "application/json"
-    },
-    body: JSON.stringify(payload)
+    try {
+        const response = await fetch(`${NGROK_URL}/api/cabinet`, {
+    method: "POST",
+    headers: {
+        "Content-Type": "application/json"
+    },
+    body: JSON.stringify(payload)
 });
+    
+        const result = await response.json();
+        console.log("Ответ от сервера при сохранении:", result);
+        
+        // Уведомление убрано отсюда, так как оно уже есть в логике закрытия шторки
 
-        const result = await response.json();
-        console.log("Ответ от сервера при сохранении:", result);
-        
-        // Уведомление убрано отсюда, так как оно уже есть в логике закрытия шторки
-
-    } catch (error) {
-        console.error("Ошибка при сохранении:", error);
-    }
+    } catch (error) {
+        console.error("Ошибка при сохранении:", error);
+    }
 }
 // ======================================
 // AI Чат Консультант
