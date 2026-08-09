@@ -421,7 +421,6 @@ const inputApt = document.getElementById('edit-apt');
 // 3. Находим кнопки и саму форму
 const btnToggleEdit = document.getElementById('toggle-edit-profile-btn');
 const btnSaveProfile = document.getElementById('save-profile-btn');
-const editForm = document.getElementById('edit-profile-form');
 
 // --- ФУНКЦИЯ ЗАГРУЗКИ ДАННЫХ ПРИ СТАРТЕ ---
 function loadUserProfile() {
