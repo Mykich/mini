@@ -404,92 +404,26 @@ const btnSaveAddress = document.getElementById("save-address-btn");
 const inputAddress = document.getElementById("address-input");
 const displayAddress = document.getElementById("display-address");
 
-// ==========================================
-// ЛОГИКА КАБИНЕТА (ПРОФИЛЬ ПОЛЬЗОВАТЕЛЯ)
-// ==========================================
-
-// 1. Находим элементы отображения данных
-const displayName = document.getElementById('profile-display-name');
-const displayPhone = document.getElementById('profile-display-phone');
-const displayApt = document.getElementById('profile-display-apt');
-
-// 2. Находим инпуты формы
-const inputName = document.getElementById('edit-name');
-const inputPhone = document.getElementById('edit-phone');
-const inputApt = document.getElementById('edit-apt');
-
-// 3. Находим кнопки и саму форму
-const btnToggleEdit = document.getElementById('toggle-edit-profile-btn');
-const btnSaveProfile = document.getElementById('save-profile-btn');
-const editForm = document.getElementById('edit-profile-form');
-
-// --- ФУНКЦИЯ ЗАГРУЗКИ ДАННЫХ ПРИ СТАРТЕ ---
-function loadUserProfile() {
-    const savedName = localStorage.getItem('userName');
-    const savedPhone = localStorage.getItem('userPhone');
-    const savedAddress = localStorage.getItem('userAddress'); // Твой старый ключ для квартиры/адреса
-
-    // Если данные есть, подставляем их в текст и в поля ввода
-    if (savedName && displayName) {
-        displayName.textContent = savedName;
-        if (inputName) inputName.value = savedName;
-    }
-    if (savedPhone && displayPhone) {
-        displayPhone.textContent = savedPhone;
-        if (inputPhone) inputPhone.value = savedPhone;
-    }
-    if (savedAddress && displayApt) {
-        displayApt.textContent = savedAddress;
-        if (inputApt) inputApt.value = savedAddress; // inputApt - это id="edit-apt"
-    }
+const savedAddress = localStorage.getItem('userAddress');
+if (savedAddress && displayAddress) {
+    displayAddress.textContent = savedAddress;
+    if (inputAddress) inputAddress.value = savedAddress;
 }
 
-// Вызываем загрузку при запуске приложения
-loadUserProfile();
-
-
-// --- ОТКРЫТИЕ / ЗАКРЫТИЕ ФОРМЫ (КАРАНДАШИК) ---
-if (btnToggleEdit && editForm) {
-    btnToggleEdit.addEventListener("click", () => {
-        // classList.toggle добавляет класс 'hidden' если его нет, и убирает, если он есть
-        editForm.classList.toggle('hidden'); 
-    });
-}
-
-
-// --- СОХРАНЕНИЕ ПРОФИЛЯ ---
-if (btnSaveProfile) {
-    btnSaveProfile.addEventListener("click", () => {
-        // Собираем данные, убирая лишние пробелы (trim)
-        const newName = inputName ? inputName.value.trim() : "";
-        const newPhone = inputPhone ? inputPhone.value.trim() : "";
-        const newAddress = inputApt ? inputApt.value.trim() : "";
-
-        // Если хотя бы одно поле не пустое
-        if (newName !== "" || newPhone !== "" || newAddress !== "") {
+if (btnSaveAddress) {
+    btnSaveAddress.addEventListener("click", () => {
+        const newAddress = inputAddress.value.trim();
+        if (newAddress !== "") {
+            // 1. Сохраняем локально для отображения
+            localStorage.setItem('userAddress', newAddress);
+            displayAddress.textContent = newAddress;
             
-            // 1. Сохраняем локально
-            if (newName) localStorage.setItem('userName', newName);
-            if (newPhone) localStorage.setItem('userPhone', newPhone);
-            if (newAddress) localStorage.setItem('userAddress', newAddress);
-
-            // 2. Обновляем отображение на экране без перезагрузки страницы
-            if (displayName) displayName.textContent = newName || "Клієнт";
-            if (displayPhone) displayPhone.textContent = newPhone || "Телефон не вказано";
-            if (displayApt) displayApt.textContent = newAddress || "Квартира не вказана";
-
-            // 3. Прячем форму обратно
-            editForm.classList.add('hidden');
-
-            // 4. Отправляем на Python-сервер
-            if (typeof saveProfileData === "function") {
-                saveProfileData(); 
-            }
-
-            // 5. Вибрация успеха (если открыто в Telegram)
-            if (window.tg && tg.HapticFeedback) {
-                tg.HapticFeedback.notificationOccurred('success');
-            }
+            // 2. Отправляем на наш Python-сервер!
+            saveProfileData();
+            
+            // 3. Вибрация и закрытие шторки
+            if (tg && tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+            closeModal();
         }
     });
 }
@@ -1084,44 +1018,44 @@ function renderOrdersList(orders) {
 }
 
 // 3. Открытие/закрытие формы редактирования
-//const toggleEditBtn = document.getElementById("toggle-edit-profile-btn");
-//const editForm = document.getElementById("edit-profile-form");
+const toggleEditBtn = document.getElementById("toggle-edit-profile-btn");
+const editForm = document.getElementById("edit-profile-form");
 
-//if (toggleEditBtn && editForm) {
-    //toggleEditBtn.addEventListener("click", () => {
-        //editForm.classList.toggle("hidden");
-    //});
-//}
+if (toggleEditBtn && editForm) {
+    toggleEditBtn.addEventListener("click", () => {
+        editForm.classList.toggle("hidden");
+    });
+}
 
 // 4. Сохранение профиля
-//const saveProfileBtn = document.getElementById("save-profile-btn");
-//if (saveProfileBtn) {
-    //saveProfileBtn.addEventListener("click", async () => {
-        //const name = document.getElementById("edit-name").value.trim();
-        //const phone = document.getElementById("edit-phone").value.trim();
-        //const apt = document.getElementById("edit-apt").value.trim();
+const saveProfileBtn = document.getElementById("save-profile-btn");
+if (saveProfileBtn) {
+    saveProfileBtn.addEventListener("click", async () => {
+        const name = document.getElementById("edit-name").value.trim();
+        const phone = document.getElementById("edit-phone").value.trim();
+        const apt = document.getElementById("edit-apt").value.trim();
 
-        //if (!name || !phone) {
-           //Telegram.WebApp.showAlert("Будь ласка, вкажіть ім'я та телефон.");
-            //return;
-        //}
+        if (!name || !phone) {
+            Telegram.WebApp.showAlert("Будь ласка, вкажіть ім'я та телефон.");
+            return;
+        }
 
-       // saveProfileBtn.innerText = "Збереження...";
+        saveProfileBtn.innerText = "Збереження...";
         saveProfileBtn.disabled = true;
 
-        //try {
-            //const response = await fetch(`${NGROK_URL}/api/cabinet`, {
-                //method: 'POST',
-                //headers: {
-                    //'Content-Type': 'application/json',
-                    //'ngrok-skip-browser-warning': '69420'
-               // },
-               // body: JSON.stringify({
-               // message: String(text || ""),
-                //telegram_id: userId ? String(userId) : null
+        try {
+            const response = await fetch(`${NGROK_URL}/api/cabinet`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'ngrok-skip-browser-warning': '69420'
+                },
+                body: JSON.stringify({
+                message: String(text || ""),
+                telegram_id: userId ? String(userId) : null
             
-               // })
-           // });
+                })
+            });
 
             if (response.ok) {
                 if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
