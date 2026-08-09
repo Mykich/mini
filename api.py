@@ -4,6 +4,14 @@ import traceback
 import json # Добавь в самый верх файла, если еще нет
 import requests
 import os
+
+# Локальная разработка: подхватываем .env, если установлен python-dotenv.
+# На Render/в проде переменные окружения задаются в панели проекта, .env не нужен.
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass
 from openai import AsyncOpenAI
 from fastapi.staticfiles import StaticFiles
 
@@ -23,8 +31,13 @@ app.add_middleware(
     allow_headers=["*"],
 )
 # === Уведомление клиенту ===
-TELEGRAM_TOKEN = "7779234071:AAFErwDEU8-gobibHl_M94je9nbvs5DwIS4" 
-ADMIN_CHAT_ID = "987895270" 
+TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
+ADMIN_CHAT_ID = os.getenv("ADMIN_CHAT_ID")
+
+if not TELEGRAM_TOKEN:
+    print("⚠️ TELEGRAM_TOKEN не знайдено в змінних середовища! Повідомлення в Telegram не відправлятимуться.")
+if not ADMIN_CHAT_ID:
+    print("⚠️ ADMIN_CHAT_ID не знайдено в змінних середовища! Адмін не отримуватиме сповіщення.")
 
 # === АИ Асистент ===
 aclient = AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
@@ -53,7 +66,7 @@ SYSTEM_PROMPT = """Ти — преміальний AI-консультант е�
 
 def send_tg_message(chat_id, text):
     """Функция для отправки сообщений через Telegram API"""
-    if not chat_id:
+    if not chat_id or not TELEGRAM_TOKEN:
         return
         
     url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
