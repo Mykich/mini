@@ -4,6 +4,11 @@ import traceback
 import json # Добавь в самый верх файла, если еще нет
 import requests
 import os
+import time
+
+import asyncio
+import logging
+from functools import wraps
 
 # Локальная разработка: подхватываем .env, если установлен python-dotenv.
 # На Render/в проде переменные окружения задаются в панели проекта, .env не нужен.
@@ -82,7 +87,33 @@ def send_tg_message(chat_id, text):
     except Exception as e:
         print(f"⚠️ Ошибка сети при отправке ТГ: {e}")
 
-
+# ==========================================
+def retry_google_api(max_retries=3):
+    """
+    Декоратор для повторного выполнения асинхронной функции
+    при получении серверных ошибок от Google (500, 503) или лимитов (429).
+    """
+    def decorator(func):
+        @wraps(func)
+        async def wrapper(*args, **kwargs):
+            for attempt in range(max_retries):
+                try:
+                    return await func(*args, **kwargs)
+                except Exception as e:
+                    error_msg = str(e)
+                    if any(code in error_msg for code in ["500", "503", "429"]):
+                        if attempt == max_retries - 1:
+                            logging.error(f"❌ Все {max_retries} попытки исчерпаны. Ошибка: {error_msg}")
+                            raise e 
+                        
+                        sleep_time = 2 ** attempt 
+                        logging.warning(f"⚠️ Ошибка Google API ({error_msg}). Повторная попытка через {sleep_time} сек...")
+                        await asyncio.sleep(sleep_time)
+                    else:
+                        raise e
+        return wrapper
+    return decorator
+# ==========================================
 
 
 # --- 1. GET: Загрузка кабинета ---
@@ -169,13 +200,14 @@ async def ai_chat(data: AIMessageData):
     
 # --- 1. GET: Загрузка кабинета ---
 @app.get("/api/cabinet")
+@retry_google_api(max_retries=3)
 async def get_cabinet(user_id: int):
     try:
         user_str_id = str(user_id)
         client_data = {"name": "", "phone": "", "apartment": "", "discount": 0}
         
-        # 1. Ищем данные клиента
-        all_clients = sheet_clients.get_all_records()
+        # 1. Ищем данные клиента (через кэш)
+        all_clients = get_cached_records(sheet_clients, "clients")
         for row in all_clients:
             if str(row.get("telegram_id", "")) == user_str_id:
                 client_data = {
@@ -188,8 +220,8 @@ async def get_cabinet(user_id: int):
         
         client_orders = []
         
-        # 2. Собираем заказы ПРАЧЕЧНОЙ
-        all_orders = sheet_orders.get_all_records()
+        # 2. Собираем заказы ПРАЧЕЧНОЙ (через кэш)
+        all_orders = get_cached_records(sheet_orders, "orders")
         for row in all_orders:
             order_tg_id = str(row.get("telegram_id", "")) 
             order_phone = str(row.get("Телефон", ""))
@@ -201,13 +233,12 @@ async def get_cabinet(user_id: int):
                     "items": str(row.get("Речі", "")),
                     "date": str(row.get("Дата", "")),
                     "price": format_price(row.get("Сума", "")),
-                    "type": "laundry" # Добавили тип, чтобы JS понимал, что это прачечная
+                    "type": "laundry"
                 })
                 
-        # 3. Собираем заявки АТЕЛЬЕ
-        all_atelier = sheet_atelier.get_all_records()
+        # 3. Собираем заявки АТЕЛЬЕ (через кэш)
+        all_atelier = get_cached_records(sheet_atelier, "atelier")
         for row in all_atelier:
-            # Ищем по колонке "Telegram ID", как ты назвал ее в листе Atelier
             order_tg_id = str(row.get("Telegram ID", ""))
             
             if order_tg_id == user_str_id:
@@ -217,7 +248,7 @@ async def get_cabinet(user_id: int):
                     "items": str(row.get("Опис", "")),
                     "date": str(row.get("Дата", "")),
                     "price": "Після огляду",
-                    "type": "atelier" # Эта метка поможет нам на фронтенде вывести иконку ножниц
+                    "type": "atelier"
                 })
         
         return {"client": client_data, "orders": client_orders}
@@ -445,6 +476,24 @@ async def create_order(order: OrderData):
         print("❌ Ошибка при создании заказа:")
         print(traceback.format_exc())
         raise HTTPException(status_code=500, detail=str(e))
+
+# Кэш в памяти для Google Таблиц (время жизни — 60 секунд)
+cache_storage = {
+    "clients": {"data": None, "expires": 0},
+    "orders": {"data": None, "expires": 0},
+    "atelier": {"data": None, "expires": 0}
+}
+CACHE_TTL = 60 
+
+def get_cached_records(sheet, cache_key):
+    global cache_storage
+    now = time.time()
+    # Если кэш пустой или устарел — делаем реальный запрос к Google Таблице
+    if cache_storage[cache_key]["data"] is None or now > cache_storage[cache_key]["expires"]:
+        cache_storage[cache_key]["data"] = sheet.get_all_records()
+        cache_storage[cache_key]["expires"] = now + CACHE_TTL
+    return cache_storage[cache_key]["data"]
+
     
 # --- 4. POST: Заявка B2B (Співпраця) ---
 @app.post("/api/b2b")
