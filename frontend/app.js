@@ -421,6 +421,7 @@ const inputApt = document.getElementById('edit-apt');
 // 3. Находим кнопки и саму форму
 const btnToggleEdit = document.getElementById('toggle-edit-profile-btn');
 const btnSaveProfile = document.getElementById('save-profile-btn');
+const editForm = document.getElementById('edit-profile-form');
 
 // --- ФУНКЦИЯ ЗАГРУЗКИ ДАННЫХ ПРИ СТАРТЕ ---
 function loadUserProfile() {
@@ -1083,44 +1084,44 @@ function renderOrdersList(orders) {
 }
 
 // 3. Открытие/закрытие формы редактирования
-const toggleEditBtn = document.getElementById("toggle-edit-profile-btn");
-const editForm = document.getElementById("edit-profile-form");
+//const toggleEditBtn = document.getElementById("toggle-edit-profile-btn");
+//const editForm = document.getElementById("edit-profile-form");
 
-if (toggleEditBtn && editForm) {
-    toggleEditBtn.addEventListener("click", () => {
-        editForm.classList.toggle("hidden");
-    });
-}
+//if (toggleEditBtn && editForm) {
+    //toggleEditBtn.addEventListener("click", () => {
+        //editForm.classList.toggle("hidden");
+    //});
+//}
 
 // 4. Сохранение профиля
-const saveProfileBtn = document.getElementById("save-profile-btn");
-if (saveProfileBtn) {
-    saveProfileBtn.addEventListener("click", async () => {
-        const name = document.getElementById("edit-name").value.trim();
-        const phone = document.getElementById("edit-phone").value.trim();
-        const apt = document.getElementById("edit-apt").value.trim();
+//const saveProfileBtn = document.getElementById("save-profile-btn");
+//if (saveProfileBtn) {
+    //saveProfileBtn.addEventListener("click", async () => {
+        //const name = document.getElementById("edit-name").value.trim();
+        //const phone = document.getElementById("edit-phone").value.trim();
+        //const apt = document.getElementById("edit-apt").value.trim();
 
-        if (!name || !phone) {
-            Telegram.WebApp.showAlert("Будь ласка, вкажіть ім'я та телефон.");
-            return;
-        }
+        //if (!name || !phone) {
+           //Telegram.WebApp.showAlert("Будь ласка, вкажіть ім'я та телефон.");
+            //return;
+        //}
 
-        saveProfileBtn.innerText = "Збереження...";
+       // saveProfileBtn.innerText = "Збереження...";
         saveProfileBtn.disabled = true;
 
-        try {
-            const response = await fetch(`${NGROK_URL}/api/cabinet`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'ngrok-skip-browser-warning': '69420'
-                },
-                body: JSON.stringify({
-                message: String(text || ""),
-                telegram_id: userId ? String(userId) : null
+        //try {
+            //const response = await fetch(`${NGROK_URL}/api/cabinet`, {
+                //method: 'POST',
+                //headers: {
+                    //'Content-Type': 'application/json',
+                    //'ngrok-skip-browser-warning': '69420'
+               // },
+               // body: JSON.stringify({
+               // message: String(text || ""),
+                //telegram_id: userId ? String(userId) : null
             
-                })
-            });
+               // })
+           // });
 
             if (response.ok) {
                 if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
