@@ -18,6 +18,21 @@ const state = {
     search: ""
 };
 
+// ======================================
+// Связь с сервером Python + идентификатор пользователя
+// Вынесено в самый верх файла: эти переменные используются почти
+// везде ниже, и если объявить их поздно, а где-то раньше по коду
+// возникнет любая ошибка на верхнем уровне — все обращения к ним
+// начнут падать с 'Cannot access before initialization' (TDZ).
+// ======================================
+const NGROK_URL = "https://mini-mrip.onrender.com";
+const safeTg = window.Telegram ? window.Telegram.WebApp : null;
+
+let userId = 123456789;
+if (safeTg && safeTg.initDataUnsafe && safeTg.initDataUnsafe.user) {
+    userId = safeTg.initDataUnsafe.user.id;
+}
+
 // 3. Данные пользователя из Telegram
 const user = tg?.initDataUnsafe?.user;
 if (user) {
@@ -116,6 +131,19 @@ if (closeAtelierBtn) {
 }
 
 // ======================================
+// Иконки по категориям (соответствуют спрайту в index.html)
+// ======================================
+const CATEGORY_ICONS = {
+    clothing: "i-shirt",
+    outerwear: "i-coat",
+    textile: "i-bed",
+    shoes: "i-shoe",
+    accessories: "i-bag",
+    aquaclean: "i-droplet",
+    atelier: "i-scissors"
+};
+
+// ======================================
 // Рендер Каталога Прачечной
 // ======================================
 function renderProducts(category) {
@@ -131,50 +159,44 @@ function renderProducts(category) {
         const quantity = cartItem ? cartItem.quantity : 0;
 
         const card = document.createElement("div");
-        card.className = `
-            bg-white rounded-[24px] p-5 
-            shadow-[0_4px_20px_rgba(0,0,0,0.03)] 
-            hover:shadow-[0_8px_30px_rgba(0,0,0,0.08)] 
-            transition-all duration-300 
-            border border-gray-50/80 
-            flex justify-between items-center
-        `;
+        card.className = "service-card";
+
+        const iconId = CATEGORY_ICONS[category] || "i-basket";
 
         // Логика кнопок: если товара нет, показываем "+". Если есть, показываем блок с количеством "+ / -"
         let controlsHTML = '';
         if (quantity === 0) {
             controlsHTML = `
-                <button class="add-btn shrink-0 w-12 h-12 rounded-[16px] bg-gray-50 text-blue-600 flex items-center justify-center text-2xl font-light hover:bg-blue-600 hover:text-white transition-colors">
-                    +
+                <button class="add-btn qty-add">
+                    <svg><use href="#i-plus"/></svg>
                 </button>
             `;
         } else {
             controlsHTML = `
-                <div class="flex items-center gap-3 bg-gray-50 rounded-[16px] p-1 border border-gray-100">
-                    <button class="remove-btn w-9 h-9 rounded-[12px] bg-white text-gray-600 shadow-sm flex items-center justify-center text-xl font-medium hover:text-red-500 transition-colors">
-                        -
+                <div class="qty-stepper">
+                    <button class="remove-btn">
+                        <svg><use href="#i-minus"/></svg>
                     </button>
-                    <span class="w-4 text-center font-bold text-gray-800">${quantity}</span>
-                    <button class="add-btn w-9 h-9 rounded-[12px] bg-blue-600 text-white shadow-sm flex items-center justify-center text-xl font-medium hover:bg-blue-700 transition-colors">
-                        +
+                    <span class="qty-stepper__count">${quantity}</span>
+                    <button class="add-btn qty-add-btn">
+                        <svg><use href="#i-plus"/></svg>
                     </button>
                 </div>
             `;
         }
 
         card.innerHTML = `
-            <div class="flex-1 pr-4">
-                <h3 class="text-[17px] font-bold text-gray-900 leading-tight">
-                    ${product.name}
-                </h3>
-                <p class="text-[13px] text-gray-500 mt-1.5 leading-relaxed">
-                    ${product.description}
-                </p>
-                <div class="text-blue-600 text-[16px] font-bold mt-3">
-                    ${product.price} ₴
+            <div class="service-card__info">
+                <div class="service-card__icon">
+                    <svg><use href="#${iconId}"/></svg>
+                </div>
+                <div class="service-card__text">
+                    <h3 class="service-card__name">${product.name}</h3>
+                    <p class="service-card__desc">${product.description}</p>
+                    <div class="service-card__price">${product.price} ₴</div>
                 </div>
             </div>
-            <div class="shrink-0 flex items-center justify-center min-w-[48px]">
+            <div class="shrink-0">
                 ${controlsHTML}
             </div>
         `;
@@ -217,42 +239,42 @@ function renderAtelierServices() {
         const quantity = cartItem ? cartItem.quantity : 0;
 
         const card = document.createElement("div");
-        card.className = `
-            bg-white rounded-[24px] p-5 
-            shadow-[0_4px_20px_rgba(0,0,0,0.03)] 
-            border border-gray-50/80 
-            flex justify-between items-center
-        `;
+        card.className = "service-card is-atelier";
 
         // Логика кнопок: если товара нет -> "+". Если есть -> "- / кол-во / +"
         let controlsHTML = '';
         if (quantity === 0) {
             controlsHTML = `
-                <button class="add-btn shrink-0 w-12 h-12 rounded-[16px] bg-indigo-50 text-indigo-600 flex items-center justify-center text-2xl font-light hover:bg-indigo-600 hover:text-white transition">
-                    +
+                <button class="add-btn qty-add">
+                    <svg><use href="#i-plus"/></svg>
                 </button>
             `;
         } else {
             controlsHTML = `
-                <div class="flex items-center gap-3 bg-indigo-50 rounded-[16px] p-1 border border-indigo-100">
-                    <button class="remove-btn w-9 h-9 rounded-[12px] bg-white text-gray-600 shadow-sm flex items-center justify-center text-xl font-medium hover:text-red-500 transition-colors">
-                        -
+                <div class="qty-stepper">
+                    <button class="remove-btn">
+                        <svg><use href="#i-minus"/></svg>
                     </button>
-                    <span class="w-4 text-center font-bold text-gray-800">${quantity}</span>
-                    <button class="add-btn w-9 h-9 rounded-[12px] bg-indigo-600 text-white shadow-sm flex items-center justify-center text-xl font-medium hover:bg-indigo-700 transition-colors">
-                        +
+                    <span class="qty-stepper__count">${quantity}</span>
+                    <button class="add-btn qty-add-btn">
+                        <svg><use href="#i-plus"/></svg>
                     </button>
                 </div>
             `;
         }
 
         card.innerHTML = `
-            <div class="flex-1 pr-4">
-                <h3 class="text-[17px] font-bold text-gray-900">${product.name}</h3>
-                <p class="text-[13px] text-gray-500 mt-1.5">${product.description}</p>
-                <div class="text-indigo-600 text-[16px] font-bold mt-3">${product.price} ₴</div>
+            <div class="service-card__info">
+                <div class="service-card__icon">
+                    <svg><use href="#i-scissors"/></svg>
+                </div>
+                <div class="service-card__text">
+                    <h3 class="service-card__name">${product.name}</h3>
+                    <p class="service-card__desc">${product.description}</p>
+                    <div class="service-card__price">${product.price} ₴</div>
+                </div>
             </div>
-            <div class="shrink-0 flex items-center justify-center min-w-[48px]">
+            <div class="shrink-0">
                 ${controlsHTML}
             </div>
         `;
@@ -489,12 +511,12 @@ function renderCheckout() {
         row.className = "flex justify-between items-center py-3";
         row.innerHTML = `
             <div class="flex-1">
-                <div class="text-[15px] font-medium text-gray-900">
+                <div class="text-[15px] font-medium" style="color:var(--ink)">
                     ${item.name} 
-                    <span class="text-blue-600 font-bold ml-1">x${item.count}</span>
+                    <span class="font-bold ml-1" style="color:var(--indigo)">x${item.count}</span>
                 </div>
             </div>
-            <div class="text-[15px] font-bold text-gray-900">${itemTotal} ₴</div>
+            <div class="text-[15px] font-bold" style="color:var(--ink)">${itemTotal} ₴</div>
         `;
         container.appendChild(row);
     });
@@ -667,90 +689,10 @@ if (b2bSubmitBtn) {
 }
 
 // ======================================
-// Связь с сервером Python (ngrok)
-// ======================================
-const NGROK_URL = "https://mini-mrip.onrender.com"; 
-const safeTg = window.Telegram ? window.Telegram.WebApp : null;
-
-let userId = 123456789;
-if (safeTg && safeTg.initDataUnsafe && safeTg.initDataUnsafe.user) {
-    userId = safeTg.initDataUnsafe.user.id;
-}
-
-async function fetchCabinetData() {
-    try {
-        const response = await fetch(`${NGROK_URL}/api/cabinet?user_id=${userId}`, {
-            method: 'GET'
-        });
-        
-        if (!response.ok) throw new Error(`Ошибка HTTP: ${response.status}`);
-
-        const data = await response.json();
-        console.log("Данные с сервера получены:", data);
-
-        // 1. Заполняем имя пользователя в кабинете
-        if (data.client) {
-            const nameEl = document.getElementById("profile-name");
-            if (nameEl) nameEl.textContent = data.client.name || "Клієнт";
-        }
-
-        // 2. Заполняем список заказов
-        const ordersContainer = document.getElementById("orders-list");
-
-        if (ordersContainer) {
-            ordersContainer.innerHTML = ""; // Очищаем старые данные
-
-            if (!data.orders || data.orders.length === 0) {
-                ordersContainer.innerHTML = `
-                    <div class="text-center text-gray-400 py-10">
-                        <div class="text-4xl mb-3">📦</div>
-                        У вас поки немає активних замовлень
-                    </div>`;
-                return;
-            }
-
-            data.orders.forEach(order => {
-                const orderCard = document.createElement("div");
-                orderCard.className = "bg-white rounded-[24px] p-5 shadow-[0_4px_20px_rgba(0,0,0,0.03)] border border-gray-50/80 mb-4";
-                
-                orderCard.innerHTML = `
-                    <div class="flex justify-between items-center mb-4">
-                        <span class="font-bold text-lg text-gray-900">Замовлення №${order.id}</span>
-                        <span class="text-xs font-bold px-3 py-1.5 rounded-full ${getStatusColor(order.status)}">${order.status}</span>
-                    </div>
-                    <div class="text-sm text-gray-500 mb-5">
-                        <p class="mb-1.5"><b class="text-gray-700">Речі:</b> ${order.items}</p>
-                        <p><b class="text-gray-700">Дата:</b> ${order.date}</p>
-                    </div>
-                    <div class="flex justify-between items-center pt-4 border-t border-gray-100">
-                        <span class="text-gray-500 text-sm">До сплати:</span>
-                        <strong class="text-blue-600 text-xl">${order.price} ₴</strong>
-                    </div>
-                `;
-                
-                ordersContainer.appendChild(orderCard);
-            });
-        }
-
-    } catch (error) {
-        console.error("Ошибка обновления кабинета:", error);
-    }
-}
-
-// Вспомогательная функция для динамического цвета статусов
-function getStatusColor(status) {
-    const s = status.toLowerCase();
-    if (s.includes("стирк") || s.includes("пранн") || s.includes("робот") || s.includes("в стирке")) {
-        return "bg-blue-100 text-blue-600";
-    }
-    if (s.includes("виконан") || s.includes("готов") || s.includes("видач")) {
-        return "bg-green-100 text-green-600";
-    }
-    return "bg-gray-100 text-gray-600";
-}
-
-// Автоматический запуск при старте
-fetchCabinetData();
+// (Старое место объявления NGROK_URL/safeTg/userId перенесено наверх файла.
+//  fetchCabinetData()/getStatusColor() удалены как мёртвый код: они писали
+//  в #orders-list, на который нет ни одной кнопки в разметке — реальные
+//  данные кабинета грузит loadCabinetData() ниже.)
 // ======================================
 // Сохранение данных профиля (POST на сервер)
 // ======================================
@@ -848,8 +790,8 @@ function appendMessage(text, sender) {
     const isUser = sender === 'user';
     
     bubble.className = isUser 
-        ? "bg-blue-600 text-white p-3.5 rounded-[20px] rounded-tr-sm text-sm shadow-sm max-w-[85%] self-end leading-relaxed animate-fade-in"
-        : "bg-white p-3.5 rounded-[20px] rounded-tl-sm text-sm text-gray-800 shadow-sm border border-gray-100 max-w-[85%] self-start leading-relaxed animate-fade-in";
+        ? "chat-bubble-user p-3.5 text-sm max-w-[85%] self-end leading-relaxed animate-fade-in"
+        : "chat-bubble-bot p-3.5 text-sm max-w-[85%] self-start leading-relaxed animate-fade-in";
 
     // Превращаем переносы строк \n в html теги <br>
     bubble.innerHTML = text.replace(/\n/g, '<br>');
@@ -864,7 +806,8 @@ function appendLoadingBubble() {
     const id = "loading-" + Date.now();
     const bubble = document.createElement("div");
     bubble.id = id;
-    bubble.className = "bg-white p-3.5 rounded-[20px] rounded-tl-sm text-sm text-gray-400 shadow-sm border border-gray-100 max-w-[40%] self-start flex items-center gap-1.5";
+    bubble.className = "chat-bubble-bot p-3.5 text-sm max-w-[40%] self-start flex items-center gap-1.5";
+    bubble.style.color = "var(--ink-faint)";
     bubble.innerHTML = `<span>Консультант думає</span><span class="animate-bounce">...</span>`;
     aiMessages.appendChild(bubble);
     aiMessages.scrollTop = aiMessages.scrollHeight;
@@ -954,11 +897,13 @@ function renderOrdersList(orders) {
 
     if (!orders || orders.length === 0) {
         container.innerHTML = `
-            <div class="bg-white rounded-[24px] p-8 text-center border border-gray-100 shadow-sm">
-                <div class="text-4xl mb-2">🧺</div>
-                <h4 class="font-bold text-gray-800 text-sm mb-1">У вас поки немає замовлень</h4>
-                <p class="text-xs text-gray-400 mb-4">Оформіть ваше перше замовлення пральні або ательє!</p>
-                <button onclick="showPage('home')" class="bg-blue-50 text-blue-600 font-bold px-4 py-2 rounded-full text-xs active:scale-95 transition">
+            <div class="card p-8 text-center">
+                <div class="icon-badge mx-auto mb-3" style="width:48px;height:48px;">
+                    <svg style="width:22px;height:22px;"><use href="#i-basket"/></svg>
+                </div>
+                <h4 style="font-weight:800; font-size:13.5px; color:var(--ink); margin-bottom:4px;">У вас поки немає замовлень</h4>
+                <p style="font-size:12px; color:var(--ink-faint); margin-bottom:16px;">Оформіть ваше перше замовлення пральні або ательє!</p>
+                <button onclick="showPage('home')" class="badge badge-indigo" style="padding:9px 16px;">
                     До каталогу
                 </button>
             </div>
@@ -969,48 +914,47 @@ function renderOrdersList(orders) {
     // Собираем карточки заказов
     container.innerHTML = orders.map(order => {
         const isAtelier = order.type === 'atelier';
-        const icon = isAtelier ? '✂️' : '🫧';
-        const typeTitle = isAtelier ? 'Ательє' : 'Пральня';
+        const iconId = isAtelier ? 'i-scissors' : 'i-droplet';
         
-        // Определяем цвет и иконку статуса
-        let statusBg = "bg-gray-100 text-gray-600";
+        // Определяем класс бейджа статуса
+        let statusClass = "badge-neutral";
         const statusText = order.status || "Прийнято";
 
         if (statusText.includes("Готово") || statusText.includes("Видано")) {
-            statusBg = "bg-emerald-50 text-emerald-600 border border-emerald-100";
+            statusClass = "badge-good";
         } else if (statusText.includes("пранн") || statusText.includes("робот")) {
-            statusBg = "bg-blue-50 text-blue-600 border border-blue-100";
+            statusClass = "badge-indigo";
         } else if (statusText.includes("огляд") || statusText.includes("Узгодження")) {
-            statusBg = "bg-amber-50 text-amber-600 border border-amber-100";
+            statusClass = "badge-gold";
         }
 
         return `
-            <div class="bg-white rounded-[20px] p-4 border border-gray-100 shadow-sm space-y-3">
+            <div class="order-card space-y-3">
                 <!-- Шапка карточки -->
                 <div class="flex items-center justify-between">
-                    <div class="flex items-center gap-2">
-                        <span class="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center text-sm shadow-inner">
-                            ${icon}
+                    <div class="flex items-center gap-2.5">
+                        <span class="icon-badge" style="width:32px;height:32px;">
+                            <svg style="width:15px;height:15px;"><use href="#${iconId}"/></svg>
                         </span>
                         <div>
-                            <span class="text-xs font-bold text-gray-800">№ ${order.id}</span>
-                            <span class="text-[10px] text-gray-400 block">${order.date || ''}</span>
+                            <span style="font-size:12px; font-weight:800; color:var(--ink);">№ ${order.id}</span>
+                            <span style="font-size:10px; color:var(--ink-faint); display:block;">${order.date || ''}</span>
                         </div>
                     </div>
-                    <span class="text-xs font-semibold px-2.5 py-1 rounded-full ${statusBg}">
+                    <span class="badge ${statusClass}">
                         ${statusText}
                     </span>
                 </div>
 
                 <!-- Содержимое (вещи/услуги) -->
-                <div class="bg-gray-50/70 rounded-[12px] p-2.5 text-xs text-gray-700 leading-relaxed">
+                <div style="background:var(--paper); border-radius:12px; padding:10px; font-size:12px; color:var(--ink-soft); line-height:1.5;">
                     ${order.items || 'Послуги'}
                 </div>
 
                 <!-- Сумма -->
-                <div class="flex justify-between items-center pt-1 text-xs">
-                    <span class="text-gray-400">Сума:</span>
-                    <span class="font-bold text-gray-900 text-sm">${order.price}</span>
+                <div class="flex justify-between items-center pt-1" style="font-size:12px;">
+                    <span style="color:var(--ink-faint);">Сума:</span>
+                    <span style="font-weight:800; color:var(--ink); font-size:13.5px;">${order.price}</span>
                 </div>
             </div>
         `;
@@ -1051,9 +995,10 @@ if (saveProfileBtn) {
                     'ngrok-skip-browser-warning': '69420'
                 },
                 body: JSON.stringify({
-                message: String(text || ""),
-                telegram_id: userId ? String(userId) : null
-            
+                    telegram_id: userId,
+                    first_name: name,
+                    phone: phone,
+                    apartment: apt
                 })
             });
 
