@@ -14,473 +14,609 @@
     <!-- Telegram Mini App -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
-    <!-- Tailwind — для layout-утилит (flex/grid/spacing). Цвета и фирменные компоненты живут в style.css -->
+    <!-- Tailwind -->
     <script src="https://cdn.tailwindcss.com"></script>
 
-    <!-- Шрифты: Manrope (текст) + Unbounded (заголовки/акценты), обе с поддержкой кирилиці -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Unbounded:wght@600;700;800&display=swap" rel="stylesheet">
-
     <!-- Наш CSS -->
-    <link rel="stylesheet" href="style.css?v=2">
+    <link rel="stylesheet" href="style.css?=v=3">
 
 </head>
 
-<body style="background:#F4F5FB;">
-
-<!-- ===================================== -->
-<!-- ІКОНКИ (спрайт) — один набір SVG замість різношерстих emoji -->
-<!-- ===================================== -->
-<svg style="display:none" aria-hidden="true">
-    <symbol id="i-basket" viewBox="0 0 24 24" fill="none">
-        <path d="M4.2 10h15.6l-1.5 9.3a2 2 0 0 1-2 1.7H7.7a2 2 0 0 1-2-1.7L4.2 10Z" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
-        <path d="M8 10V7.3a4 4 0 0 1 8 0V10" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
-        <path d="M4.2 10 2.7 6.2M19.8 10l1.5-3.8" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
-        <path d="M9 13.2v4.3M12 13.2v4.3M15 13.2v4.3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" opacity=".55"/>
-    </symbol>
-
-    <symbol id="i-home" viewBox="0 0 24 24" fill="none">
-        <path d="M4 11.3 12 4.2l8 7.1" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
-        <path d="M6 10v8.6c0 .55.45 1 1 1h3v-5.6h4v5.6h3c.55 0 1-.45 1-1V10" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
-    </symbol>
-
-    <symbol id="i-user" viewBox="0 0 24 24" fill="none">
-        <circle cx="12" cy="8.3" r="3.4" stroke="currentColor" stroke-width="1.7"/>
-        <path d="M5 19.3c1.15-3.4 3.9-5 7-5s5.85 1.6 7 5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
-    </symbol>
-
-    <symbol id="i-truck" viewBox="0 0 24 24" fill="none">
-        <rect x="2.3" y="7" width="11.2" height="9" rx="1" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/>
-        <path d="M13.5 10h3.8l3.2 3.1V16h-7z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/>
-        <circle cx="6.6" cy="17.6" r="1.7" stroke="currentColor" stroke-width="1.6"/>
-        <circle cx="16.8" cy="17.6" r="1.7" stroke="currentColor" stroke-width="1.6"/>
-    </symbol>
-
-    <symbol id="i-needle" viewBox="0 0 24 24" fill="none">
-        <path d="M3.6 20.4 15.8 8.2a2.5 2.5 0 0 0-3.5-3.5L4.1 12.8" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
-        <path d="M2 18.8l1.6 1.6M4.1 12.8l-1.7 5.4 3.1-1.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
-        <circle cx="17.4" cy="6.6" r="1.7" stroke="currentColor" stroke-width="1.5"/>
-        <path d="M7.3 16.6c1.3.55 2.5.2 3.3-.65" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" opacity=".6"/>
-    </symbol>
-
-    <symbol id="i-building" viewBox="0 0 24 24" fill="none">
-        <rect x="4" y="3.4" width="10" height="17.2" rx="1" stroke="currentColor" stroke-width="1.7"/>
-        <path d="M14 9.2h6v11.4h-6" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/>
-        <path d="M7 7.2h1.2M11 7.2h1M7 10.6h1.2M11 10.6h1M7 14h1.2M11 14h1" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
-        <path d="M9 20.6v-3.8h2v3.8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-    </symbol>
-
-    <symbol id="i-shirt" viewBox="0 0 24 24" fill="none">
-        <path d="M8 4.4 4.4 7l1.6 3 2-1.1v10.2c0 .55.45 1 1 1h6c.55 0 1-.45 1-1V8.9l2 1.1 1.6-3L16 4.4l-2 1.3h-4L8 4.4Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
-    </symbol>
-
-    <symbol id="i-coat" viewBox="0 0 24 24" fill="none">
-        <path d="M9 4 6 3 3.4 7l2 1.9v11.6h13.2V8.9L20.6 7 18 3l-3 1" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
-        <path d="M9 4a3 3 0 0 0 6 0" stroke="currentColor" stroke-width="1.6"/>
-        <path d="M12 9v11.5" stroke="currentColor" stroke-width="1.3" opacity=".55"/>
-    </symbol>
-
-    <symbol id="i-bed" viewBox="0 0 24 24" fill="none">
-        <rect x="3" y="13.2" width="18" height="5.8" rx="2" stroke="currentColor" stroke-width="1.6"/>
-        <rect x="5.5" y="8" width="6.5" height="5.2" rx="1.6" stroke="currentColor" stroke-width="1.5"/>
-        <path d="M3 19v2M21 19v2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
-    </symbol>
-
-    <symbol id="i-shoe" viewBox="0 0 24 24" fill="none">
-        <path d="M3 16.6c0-1.75 1-2.95 2.4-3.75L10 10.1l2 1.6 3.6-1.3c1.5-.5 3.05.4 3.35 2l.4 2.05c.2 1.1-.6 2.1-1.7 2.1H4.35A1.35 1.35 0 0 1 3 15.2Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
-        <path d="M10 10.1V7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
-    </symbol>
-
-    <symbol id="i-bag" viewBox="0 0 24 24" fill="none">
-        <path d="M6.4 8h11.2l1 12.5H5.4Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
-        <path d="M9 8V6a3 3 0 0 1 6 0v2" stroke="currentColor" stroke-width="1.6"/>
-    </symbol>
-
-    <symbol id="i-droplet" viewBox="0 0 24 24" fill="none">
-        <path d="M12 3.6s6.1 6.85 6.1 11.1a6.1 6.1 0 1 1-12.2 0c0-4.25 6.1-11.1 6.1-11.1Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
-    </symbol>
-
-    <symbol id="i-scissors" viewBox="0 0 24 24" fill="none">
-        <circle cx="6" cy="6.4" r="2.2" stroke="currentColor" stroke-width="1.6"/>
-        <circle cx="6" cy="17.6" r="2.2" stroke="currentColor" stroke-width="1.6"/>
-        <path d="M7.7 7.9 20 19.4M7.7 16.1 20 4.6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
-    </symbol>
-
-    <symbol id="i-chevron" viewBox="0 0 24 24" fill="none">
-        <path d="M9 5l7 7-7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-    </symbol>
-
-    <symbol id="i-arrow-left" viewBox="0 0 24 24" fill="none">
-        <path d="M19 12H5M11 6l-6 6 6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-    </symbol>
-
-    <symbol id="i-edit" viewBox="0 0 24 24" fill="none">
-        <path d="M4 20h4L18.5 9.5a2 2 0 0 0 0-2.8l-1.2-1.2a2 2 0 0 0-2.8 0L4 15v5Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
-        <path d="M13.3 6.7l3 3" stroke="currentColor" stroke-width="1.6"/>
-    </symbol>
-
-    <symbol id="i-refresh" viewBox="0 0 24 24" fill="none">
-        <path d="M4 12a8 8 0 0 1 13.65-5.65M20 12a8 8 0 0 1-13.65 5.65" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
-        <path d="M17 2.9v4.1h-4.1M7 21.1V17h4.1" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
-    </symbol>
-
-    <symbol id="i-close" viewBox="0 0 24 24" fill="none">
-        <path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/>
-    </symbol>
-
-    <symbol id="i-plus" viewBox="0 0 24 24" fill="none">
-        <path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-    </symbol>
-
-    <symbol id="i-minus" viewBox="0 0 24 24" fill="none">
-        <path d="M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-    </symbol>
-
-    <symbol id="i-send" viewBox="0 0 24 24" fill="none">
-        <path d="M4 12 20 4 13 20l-2-6-7-2Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
-    </symbol>
-
-    <symbol id="i-check" viewBox="0 0 24 24" fill="none">
-        <path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/>
-    </symbol>
-</svg>
+<body class="bg-gray-100">
 
 <div id="app" class="min-h-screen pb-24">
 
 <!-- ===================================== -->
 <!-- HEADER -->
 <!-- ===================================== -->
-<header class="sticky top-0 z-50">
+<header class="sticky top-0 z-50 bg-white border-b border-gray-200">
     <div class="px-5 py-4">
         <div class="flex items-center justify-between">
-
+            
             <div class="flex items-center gap-3">
                 <!-- Кнопка "Назад" (скрыта по умолчанию) -->
-                <button
-                    id="header-back-btn"
-                    class="hidden icon-btn"
-                    style="width:40px;height:40px;">
-                    <svg style="width:18px;height:18px;"><use href="#i-arrow-left"/></svg>
+                <button 
+                    id="header-back-btn" 
+                    class="hidden w-10 h-10 bg-gray-100 hover:bg-gray-200 active:scale-95 rounded-2xl flex items-center justify-center text-xl text-gray-700 transition">
+                    ←
                 </button>
 
                 <div>
-                    <h1 class="font-display font-extrabold leading-none" style="font-size:20px; color:var(--ink);">Pralnya Vdoma</h1>
-                    <p style="font-size:12.5px; color:var(--ink-soft); margin-top:5px;">Преміальна пральня</p>
+                    <h1 class="text-2xl font-bold">Pralnya Vdoma</h1>
+                    <p class="text-sm text-gray-500">Преміальна пральня</p>
                 </div>
             </div>
 
-            <div class="icon-badge" style="width:44px;height:44px;">
-                <svg style="width:21px;height:21px;"><use href="#i-basket"/></svg>
+            <div class="w-12 h-12 rounded-full bg-blue-600 text-white flex items-center justify-center text-xl shadow-sm">
+                🧺
             </div>
 
         </div>
     </div>
-    <div class="stitch" style="margin:0 20px;"></div>
 </header>
-
-    <!-- ===================================== -->
+        <!-- ===================================== -->
     <!-- HOME PAGE -->
     <!-- ===================================== -->
 
     <main id="home-page" class="px-5 py-5">
 
         <!-- Welcome Card -->
-        <section class="hero-card p-7">
 
-            <div class="flex justify-between items-start">
+        <section
+class="rounded-3xl
+bg-gradient-to-r
+from-blue-700
+to-indigo-700
+text-white
+p-7
+shadow-xl">
 
-                <div>
-                    <p id="greeting-text" style="font-size:13.5px; opacity:.8;">Доброго дня</p>
-                    <h2 id="user-name" class="font-display font-bold" style="font-size:27px; margin-top:8px; line-height:1.15;">Клієнт</h2>
-                    <p style="margin-top:10px; opacity:.92; font-size:14px; line-height:1.5; max-width:220px;">
-                        Преміальна пральня та ательє прямо у Вашому ЖК
-                    </p>
-                </div>
+    <div class="flex justify-between items-start">
 
-                <div class="icon-badge on-brand" style="width:60px;height:60px;">
-                    <svg style="width:30px;height:30px;"><use href="#i-basket"/></svg>
-                </div>
+        <div>
 
-            </div>
+            <p
+                id="greeting-text"
+                class="text-sm opacity-80">
 
-            <div class="mt-6" style="border-radius:20px; background:rgba(255,255,255,.14); backdrop-filter:blur(6px); padding:16px; border:1px solid rgba(255,255,255,.22);">
+                Доброго дня 👋
 
-                <div class="flex items-center gap-2" style="font-weight:700; font-size:14.5px;">
-                    <svg style="width:18px;height:18px;flex-shrink:0;"><use href="#i-truck"/></svg>
-                    Безкоштовний забір та доставка
-                </div>
+            </p>
 
-                <div style="font-size:12.5px; opacity:.9; margin-top:5px;">
-                    Для всіх мешканців житлового комплексу
-                </div>
+            <h2
+                id="user-name"
+                class="text-3xl font-bold mt-2">
 
-            </div>
+                Клієнт
 
-        </section>
+            </h2>
+
+            <p class="mt-3 opacity-90">
+
+                Преміальна пральня та ательє
+                прямо у Вашому ЖК
+
+            </p>
+
+        </div>
+
+        <div
+            class="w-20 h-20 rounded-3xl bg-white/20 flex items-center justify-center text-5xl">
+
+            🧺
+
+        </div>
+
+    </div>
+
+    <div
+        class="mt-6 rounded-[20px] bg-white/15 backdrop-blur-md p-4 border border-white/25 shadow-inner">
+
+        <div class="font-semibold text-lg flex items-center gap-2">
+            <span>🚚</span> Безкоштовний забір та доставка
+        </div>
+
+        <div class="text-sm opacity-90 mt-1">
+            Для всіх мешканців житлового комплексу
+        </div>
+
+    </div>
+
+</section>
 
 
         <!-- Statistics -->
+
         <section class="grid grid-cols-2 gap-4 mt-5">
 
-            <div class="card p-5">
-                <div style="font-size:12.5px; color:var(--ink-soft);">Замовлень</div>
-                <div id="orders-count" class="font-display font-bold" style="font-size:26px; margin-top:8px;">0</div>
+            <div
+                class="bg-white rounded-2xl p-5 shadow">
+
+                <div class="text-gray-500 text-sm">
+
+                    Замовлень
+
+                </div>
+
+                <div
+                    id="orders-count"
+                    class="text-3xl font-bold mt-2">
+
+                    0
+
+                </div>
+
             </div>
 
-            <div class="card p-5">
-                <div style="font-size:12.5px; color:var(--ink-soft);">Бонуси</div>
-                <div id="bonus-count" class="font-display font-bold" style="font-size:26px; margin-top:8px; color:var(--gold);">0 ₴</div>
+            <div
+                class="bg-white rounded-2xl p-5 shadow">
+
+                <div class="text-gray-500 text-sm">
+
+                    Бонуси
+
+                </div>
+
+                <div
+                    id="bonus-count"
+                    class="text-3xl font-bold mt-2 text-blue-600">
+
+                    0 ₴
+
+                </div>
+
             </div>
 
         </section>
 
 
-        <!-- ===================================== -->
-        <!-- QUICK ACTIONS -->
-        <!-- ===================================== -->
-        <section class="mt-7">
-
-            <div class="flex items-center justify-between mb-4">
-                <h3 class="font-display font-bold" style="font-size:18px;">Швидкі дії</h3>
-            </div>
-
-            <div class="grid grid-cols-1 gap-3.5">
-
-                <!-- Здати речі -->
-                <button class="quick-action action-row card" data-page="order">
-                    <div class="icon-badge" style="width:54px;height:54px;">
-                        <svg style="width:25px;height:25px;"><use href="#i-basket"/></svg>
-                    </div>
-                    <div class="flex-1 min-w-0">
-                        <div style="font-weight:800; font-size:16.5px;">Здати речі</div>
-                        <div style="font-size:12.5px; color:var(--ink-soft); margin-top:3px;">Прання, аквачистка та прасування</div>
-                    </div>
-                    <svg style="width:20px;height:20px;color:var(--indigo);flex-shrink:0;"><use href="#i-chevron"/></svg>
-                </button>
-
-                <!-- Ательє -->
-                <button class="quick-action action-row card" data-page="atelier">
-                    <div class="icon-badge on-gold" style="width:54px;height:54px;">
-                        <svg style="width:25px;height:25px;"><use href="#i-needle"/></svg>
-                    </div>
-                    <div class="flex-1 min-w-0">
-                        <div style="font-weight:800; font-size:16.5px;">Ательє</div>
-                        <div style="font-size:12.5px; color:var(--ink-soft); margin-top:3px;">Ремонт, реставрація та підгонка</div>
-                    </div>
-                    <svg style="width:20px;height:20px;color:var(--indigo);flex-shrink:0;"><use href="#i-chevron"/></svg>
-                </button>
-
-                <!-- B2B -->
-                <button class="quick-action action-row exec-card" data-page="b2b">
-                    <div class="icon-badge on-dark" style="width:54px;height:54px;">
-                        <svg style="width:25px;height:25px;"><use href="#i-building"/></svg>
-                    </div>
-                    <div class="flex-1 min-w-0">
-                        <div style="font-weight:800; font-size:16.5px;">B2B для бізнесу</div>
-                        <div style="font-size:12.5px; opacity:.72; margin-top:3px;">Послуги для готелів, ресторанів та офісів</div>
-                    </div>
-                    <svg style="width:20px;height:20px;flex-shrink:0;"><use href="#i-chevron"/></svg>
-                </button>
-
-            </div>
-        </section>
-
-    </main>
-
 <!-- ===================================== -->
-<!-- ORDER PAGE -->
+<!-- QUICK ACTIONS -->
 <!-- ===================================== -->
-<main id="order-page" class="hidden px-5 py-5">
+<section class="mt-6">
 
-    <section class="mb-6">
-        <div class="flex justify-between items-center">
-            <div>
-                <div class="eyebrow">Pralnya Vdoma</div>
-                <h1 class="font-display font-bold" style="font-size:25px; margin-top:6px;">Здати речі</h1>
-                <p style="font-size:13.5px; color:var(--ink-soft); margin-top:8px;">Оберіть речі для прання або аквачистки</p>
-            </div>
-            <div class="icon-badge" style="width:58px;height:58px;">
-                <svg style="width:27px;height:27px;"><use href="#i-basket"/></svg>
-            </div>
-        </div>
-    </section>
-
-    <!-- DELIVERY -->
-    <section class="mb-6 tile p-4" style="background:var(--indigo-pale); border-color:var(--indigo-pale-2);">
-        <div class="flex items-center">
-            <div class="icon-badge" style="width:46px;height:46px; background:#fff;">
-                <svg style="width:21px;height:21px;"><use href="#i-truck"/></svg>
-            </div>
-            <div class="ml-4">
-                <div style="font-weight:800; font-size:14.5px; color:var(--indigo-600);">Безкоштовний забір та доставка</div>
-                <div style="font-size:12px; color:var(--ink-soft); margin-top:3px;">По території житлового комплексу</div>
-            </div>
-        </div>
-    </section>
-
-    <!-- CATEGORIES -->
-    <section class="mb-7">
-        <div class="flex gap-2.5 overflow-x-auto pb-2 no-scrollbar">
-
-            <button class="category-btn active" data-category="clothing">
-                <svg><use href="#i-shirt"/></svg> Одяг
-            </button>
-
-            <button class="category-btn" data-category="outerwear">
-                <svg><use href="#i-coat"/></svg> Верхній одяг
-            </button>
-
-            <button class="category-btn" data-category="textile">
-                <svg><use href="#i-bed"/></svg> Білизна
-            </button>
-
-            <button class="category-btn" data-category="shoes">
-                <svg><use href="#i-shoe"/></svg> Взуття
-            </button>
-
-            <button class="category-btn" data-category="accessories">
-                <svg><use href="#i-bag"/></svg> Аксесуари
-            </button>
-
-            <button class="category-btn" data-category="aquaclean">
-                <svg><use href="#i-droplet"/></svg> Аквачистка
-            </button>
-
-        </div>
-    </section>
-
-    <!-- SERVICES CATALOG -->
-    <section class="mt-7">
-        <h3 class="font-display font-bold" style="font-size:19px; margin-bottom:18px;">Послуги</h3>
-        <div id="products-list" class="space-y-3">
-            <!-- Карточки будут создаваться JavaScript -->
-        </div>
-    </section>
-
-</main>
-
-<!-- ===================================== -->
-<!-- ORDERS PAGE (устаревшая, оставлена для совместимости с pages{}) -->
-<!-- ===================================== -->
-<main id="orders-page" class="hidden px-5 py-5">
-    <section class="mb-6">
-        <div class="eyebrow">Pralnya Vdoma</div>
-        <h1 class="font-display font-bold" style="font-size:25px; margin-top:6px;">Мої замовлення</h1>
-    </section>
-    <div id="orders-list" class="grid grid-cols-1 gap-4 pb-24"></div>
-</main>
-
-<!-- ===================================== -->
-<!-- AI PAGE -->
-<!-- ===================================== -->
-
-<section id="ai-page" class="hidden min-h-screen pb-24 pt-4 px-4">
-    <!-- Кнопка назад -->
-    <button onclick="showPage('home')" class="mb-4 flex items-center gap-1.5" style="color:var(--ink-faint); font-weight:700; font-size:14px;">
-        <svg style="width:18px;height:18px;"><use href="#i-arrow-left"/></svg>
-        Назад
-    </button>
-
-    <!-- Шапка чата -->
-    <div class="card flex items-center gap-3 p-4 mb-4">
-        <div class="icon-badge" style="width:42px;height:42px;">
-            <span style="font-size:19px;">🤖</span>
-        </div>
-        <div>
-            <h2 style="font-weight:800; font-size:15px; color:var(--ink);">Pralnya AI Консультант</h2>
-            <p style="font-size:11.5px; font-weight:600; color:var(--good); display:flex; align-items:center; gap:5px; margin-top:2px;">
-                <span style="width:7px;height:7px;border-radius:50%;background:var(--good);display:inline-block;" class="animate-pulse"></span> Онлайн 24/7
-            </p>
-        </div>
+    <div class="flex items-center justify-between mb-4">
+        <h3 class="text-xl font-bold">Швидкі дії</h3>
     </div>
 
-    <!-- Быстрые вопросы (Чипсы) -->
-    <div class="flex gap-2 overflow-x-auto pb-3 mb-2 no-scrollbar">
-        <button class="ai-chip">Скільки коштує прання?</button>
-        <button class="ai-chip">Як вивести пляму від вина?</button>
-        <button class="ai-chip">Послуги ательє</button>
-    </div>
+    <div class="grid grid-cols-1 gap-4">
 
-    <!-- Область сообщений чата -->
-    <div id="ai-messages" class="p-4 space-y-3 flex flex-col" style="background:rgba(255,255,255,.65); backdrop-filter:blur(10px); border-radius:24px; min-height:380px; max-height:50vh; overflow-y:auto; border:1px solid var(--line-soft);">
-        <!-- Приветственное сообщение от ИИ -->
-        <div class="chat-bubble-bot p-3.5" style="font-size:13.5px; color:var(--ink); max-width:85%; align-self:flex-start; line-height:1.5;">
-            Вітаю! 👋 Я розумний асистент <b>PralnyaVdoma</b>.
-            <br><br>
-            Можу підказати ціни, порадити, як доглядати за речами або допомогти оформити замовлення. Про що хочете запитати?
-        </div>
-    </div>
-
-    <!-- Поле ввода и кнопка отправки -->
-    <div class="mt-3 flex gap-2">
-        <input type="text" id="ai-input" placeholder="Запитайте щось..." class="field" style="border-radius:20px;">
-        <button id="ai-send-btn" class="btn btn-primary" style="width:48px;height:48px;border-radius:20px;flex-shrink:0;">
-            <svg style="width:19px;height:19px;"><use href="#i-send"/></svg>
+        <!-- Здати речі -->
+        <button
+            class="quick-action bg-white rounded-3xl p-6 shadow-md border border-gray-100 hover:shadow-xl transition"
+            data-page="order">
+            <div class="flex justify-between items-center">
+                <div class="text-left">
+                    <div class="text-5xl">🧺</div>
+                    <div class="mt-4 text-xl font-bold">Здати речі</div>
+                    <div class="text-gray-500 mt-2">Прання, аквачистка та прасування</div>
+                </div>
+                <div class="text-4xl text-blue-600">→</div>
+            </div>
         </button>
+
+        <!-- Ательє -->
+        <button
+            class="quick-action bg-white rounded-3xl p-6 shadow-md border border-gray-100 hover:shadow-xl transition"
+            data-page="atelier">
+            <div class="flex justify-between items-center">
+                <div class="text-left">
+                    <div class="text-5xl">🧵</div>
+                    <div class="mt-4 text-xl font-bold">Ательє</div>
+                    <div class="text-gray-500 mt-2">Ремонт, реставрація та підгонка</div>
+                </div>
+                <div class="text-4xl text-blue-600">→</div>
+            </div>
+        </button>
+
+        <!-- B2B -->
+        <button
+            class="quick-action rounded-3xl bg-gradient-to-r from-slate-800 to-slate-900 text-white p-6 shadow-xl"
+            data-page="b2b">
+            <div class="flex justify-between items-center">
+                <div class="text-left">
+                    <div class="text-5xl">🏢</div>
+                    <div class="mt-4 text-xl font-bold">B2B для бізнесу</div>
+                    <div class="opacity-80 mt-2">Послуги для готелів, ресторанів та офісів</div>
+                </div>
+                <div class="text-4xl">→</div>
+            </div>
+        </button>
+
     </div>
 </section>
 
+    </main>
 <!-- ===================================== -->
-<!-- CABINET PAGE -->
+<!-- Bottom Navigation -->
+<!-- ORDER PAGE -->
+<main id="order-page" class="hidden px-5 py-5">
 <!-- ===================================== -->
-<section id="cabinet-page" class="hidden min-h-screen pb-28 pt-4 px-4 space-y-4">
+<!-- ORDER HEADER -->
+<!-- ===================================== -->
 
-    <!-- 1. Карточка профиля -->
-    <div class="card p-5" style="position:relative;">
-        <div class="flex items-center justify-between mb-4">
-            <div class="flex items-center gap-3">
-                <div id="user-avatar-initials" class="flex items-center justify-center font-bold" style="width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg, var(--indigo), var(--indigo-deep));color:#fff;font-size:17px;box-shadow:var(--shadow-pop);">
-                    <svg style="width:22px;height:22px;"><use href="#i-user"/></svg>
-                </div>
-                <div>
-                    <h2 id="profile-display-name" style="font-weight:800; font-size:16.5px; color:var(--ink); line-height:1.25;">Завантаження...</h2>
-                    <p id="profile-display-phone" style="font-size:12px; color:var(--ink-soft); margin-top:2px;">+380 -- --- -- --</p>
+<section class="mb-6">
+
+    <div class="flex justify-between items-center">
+
+        <div>
+
+            <div class="text-sm text-gray-500">
+
+                Pralnya Vdoma
+
+            </div>
+
+            <h1 class="text-3xl font-bold mt-1">
+
+                🧺 Здати речі
+
+            </h1>
+
+            <p class="text-gray-500 mt-2">
+
+                Оберіть речі для прання або аквачистки
+
+            </p>
+
+        </div>
+
+        <div
+            class="w-16 h-16 rounded-3xl bg-blue-100 flex items-center justify-center text-4xl">
+
+            🧺
+
+        </div>
+
+    </div>
+
+</section>
+<!-- ===================================== -->
+<!-- DELIVERY -->
+<!-- ===================================== -->
+
+<section
+    class="mb-6 rounded-3xl bg-gradient-to-r from-green-500 to-emerald-600 text-white p-5 shadow-xl">
+
+    <div class="flex items-center">
+
+        <div class="text-4xl mr-4">
+
+            🚚
+
+        </div>
+
+        <div>
+
+            <div class="font-bold text-lg">
+
+                Безкоштовний забір та доставка
+
+            </div>
+
+            <div class="text-sm opacity-90 mt-1">
+
+                По території житлового комплексу
+
+            </div>
+
+        </div>
+
+    </div>
+
+</section>
+
+<!-- ===================================== -->
+<!-- CATEGORIES -->
+<!-- ===================================== -->
+
+<section class="mb-7">
+
+    <div class="flex gap-3 overflow-x-auto pb-2 no-scrollbar">
+
+        <button class="category-btn active" data-category="clothing">
+            👔 Одяг
+        </button>
+
+        <button class="category-btn" data-category="outerwear">
+            🧥 Верхній одяг
+        </button>
+
+        <button class="category-btn" data-category="textile">
+            🛏 Білизна
+        </button>
+
+        <button class="category-btn" data-category="shoes">
+            👟 Взуття
+        </button>
+
+        <button class="category-btn" data-category="accessories">
+            👜 Аксесуари
+        </button>
+
+        <button class="category-btn" data-category="aquaclean">
+            💧 Аквачистка
+        </button>
+
+    </div>
+
+</section>
+
+<!-- ===================================== -->
+<!-- SERVICES CATALOG -->
+<!-- ===================================== -->
+
+<section class="mt-7">
+
+    <h3 class="text-2xl font-bold mb-5">
+
+        Послуги
+
+    </h3>
+
+    <div id="products-list" class="space-y-4">
+
+        <!-- Карточки будут создаваться JavaScript -->
+
+    </div>
+
+</section>
+
+
+<!-- ===================================== -->
+<!-- CART BAR -->
+<!-- ===================================== -->
+
+<div
+    id="cart-bar"
+    class="hidden fixed bottom-24 left-5 right-5 rounded-3xl bg-blue-600 text-white shadow-2xl p-5 z-40">
+
+    <div class="flex justify-between items-center">
+
+        <div>
+
+            <div class="text-sm opacity-80">
+
+                Кошик
+
+            </div>
+
+            <div class="font-bold text-xl">
+
+                <span id="cart-count">
+
+                    0
+
+                </span>
+
+                товарів
+
+            </div>
+
+        </div>
+
+        <div class="text-right">
+
+            <div
+                id="cart-total"
+                class="font-bold text-2xl">
+
+                0 ₴
+
+            </div>
+
+            <button
+                id="cart-button"
+                class="mt-2 bg-white text-blue-600 rounded-xl px-5 py-2 font-bold">
+
+                Оформити →
+
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+<!-- ===================================== -->
+<!-- SEARCH -->
+<!-- ===================================== 
+
+<section class="mb-6">
+
+    <div
+        class="flex items-center rounded-2xl bg-white shadow-md px-5 py-4">
+
+        <span class="text-2xl mr-3">
+
+            🔍
+
+        </span>
+
+        <input
+            id="search-input"
+            type="text"
+            placeholder="Пошук послуги..."
+            class="w-full outline-none bg-transparent">
+
+    </div>
+
+</section>
+-->
+
+
+
+
+<!-- ===================================== -->
+<!-- POPULAR -->
+<!-- ===================================== -->
+
+<!--<section class="mt-7">
+
+    <h3 class="text-xl font-bold mb-4">
+
+        ⭐ Популярні послуги
+
+    </h3>
+
+    <div id="popular-services">
+
+    </div>
+
+</section> -->
+
+
+
+</main>
+
+<!-- ===================================== -->
+<!-- ORDERS PAGE -->
+<!-- ===================================== -->
+<main id="orders-page" class="hidden px-5 py-5">
+    <section class="mb-6">
+        <div class="flex justify-between items-center">
+            <div>
+                <div class="text-sm text-gray-500">Pralnya Vdoma</div>
+                <h1 class="text-3xl font-bold mt-1">📦 Мої замовлення</h1>
+                <p class="text-gray-500 mt-2">Історія та поточні статуси</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Контейнер для списку замовлень -->
+    <div id="orders-list" class="grid grid-cols-1 gap-4 pb-24">
+        <!-- Карточки будуть генеруватися через JS -->
+    </div>
+</main>
+
+<!-- ===================================== -->
+<!-- AI PAGE (Fixed Layout Fix) -->
+<!-- ===================================== -->
+<section id="ai-page" class="hidden relative pb-32 pt-4 px-4">
+    
+    <!-- Шапка AI -->
+    <div class="bg-white rounded-[20px] p-3 mb-5 shadow-sm border border-gray-100 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-500 text-white flex items-center justify-center text-lg shadow-md shadow-blue-200/50">
+                ✨
+            </div>
+            <div>
+                <h2 class="font-bold text-gray-900 text-[15px]">Pralnya AI</h2>
+                <div class="text-[11px] text-gray-500 font-medium flex items-center gap-1.5 mt-0.5">
+                    <span class="relative flex h-2 w-2">
+                      <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                      <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                    </span>
+                    На зв'язку 24/7
                 </div>
             </div>
-            <button id="toggle-edit-profile-btn" class="icon-btn" style="width:36px;height:36px;">
-                <svg style="width:16px;height:16px;"><use href="#i-edit"/></svg>
+        </div>
+    </div>
+
+    <!-- Область повідомлень (Звичайний нативний скрол) -->
+    <div id="ai-messages" class="space-y-4">
+        
+        <!-- Швидкі питання -->
+        <div class="flex gap-2 overflow-x-auto pb-2 scrollbar-none mb-4">
+            <button class="shrink-0 bg-white text-gray-700 text-xs font-medium px-4 py-2.5 rounded-[14px] shadow-sm border border-gray-100 active:scale-95 transition">
+                🫧 Ціни на прання
+            </button>
+            <button class="shrink-0 bg-white text-gray-700 text-xs font-medium px-4 py-2.5 rounded-[14px] shadow-sm border border-gray-100 active:scale-95 transition">
+                ✂️ Ательє
+            </button>
+            <button class="shrink-0 bg-white text-gray-700 text-xs font-medium px-4 py-2.5 rounded-[14px] shadow-sm border border-gray-100 active:scale-95 transition">
+                🍷 Видалити пляму
+            </button>
+        </div>
+
+        <!-- Повідомлення Бота -->
+        <div class="flex items-end gap-2.5">
+            <div class="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-500 flex-shrink-0 flex items-center justify-center text-[13px] shadow-sm text-white">✨</div>
+            <div class="bg-white p-4 rounded-[20px] rounded-bl-sm text-[14px] text-gray-800 shadow-sm border border-gray-100 max-w-[85%] leading-relaxed">
+                Вітаю! 👋 Я розумний асистент <b>PralnyaVdoma</b>. 
+                <br><br>
+                Можу підказати ціни, порадити, як доглядати за речами або допомогти оформити замовлення. Про що хочете запитати?
+            </div>
+        </div>
+    </div>
+
+    <!-- Фіксоване поле вводу (Завжди вище нижнього меню на 80px) -->
+    <div class="fixed bottom-[80px] left-0 right-0 px-4 py-3 bg-gray-100/95 backdrop-blur-md border-t border-gray-200 z-40">
+        <div class="bg-white p-1.5 rounded-[22px] border border-gray-200 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-100 transition-all flex items-center gap-2 shadow-sm">
+            <input 
+                type="text" 
+                id="ai-input" 
+                placeholder="Повідомлення..." 
+                class="flex-1 bg-transparent px-3 py-1.5 text-[15px] text-gray-900 focus:outline-none placeholder-gray-400 caret-blue-600 font-normal"
+            >
+            <button id="ai-send-btn" class="w-9 h-9 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold shadow-md shadow-blue-200 hover:bg-blue-700 active:scale-95 transition shrink-0">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"></line><polyline points="5 12 12 5 19 12"></polyline></svg>
+            </button>
+        </div>
+    </div>
+</section>
+<!-- ===================================== -->
+<!-- CABINET PAGE (Органичный кабинет) -->
+<!-- ===================================== -->
+<section id="cabinet-page" class="hidden min-h-screen pb-28 pt-4 px-4 space-y-4">
+    
+    <!-- 1. Карточка профиля -->
+    <div class="bg-white rounded-[24px] p-5 shadow-sm border border-gray-100 relative overflow-hidden">
+        <div class="flex items-center justify-between mb-4">
+            <div class="flex items-center gap-3">
+                <div class="w-12 h-12 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-500 text-white flex items-center justify-center font-bold text-lg shadow-md shadow-blue-100" id="user-avatar-initials">
+                    👤
+                </div>
+                <div>
+                    <h2 class="font-bold text-gray-900 text-lg leading-tight" id="profile-display-name">Завантаження...</h2>
+                    <p class="text-xs text-gray-500" id="profile-display-phone">+380 -- --- -- --</p>
+                </div>
+            </div>
+            <button id="toggle-edit-profile-btn" class="w-9 h-9 rounded-full bg-gray-50 border border-gray-100 flex items-center justify-center text-gray-600 hover:bg-gray-100 active:scale-95 transition">
+                ✏️
             </button>
         </div>
 
         <!-- Информация об адресе -->
-        <div class="flex items-center justify-between" style="background:var(--paper); border-radius:16px; padding:12px 14px; font-size:12.5px;">
-            <span style="color:var(--ink-faint);">Адреса доставки:</span>
-            <span id="profile-display-apt" style="font-weight:700; color:var(--ink);">Квартира не вказана</span>
+        <div class="bg-gray-50 rounded-[16px] p-3 flex items-center justify-between text-xs text-gray-600">
+            <span class="text-gray-400">Адреса доставки:</span>
+            <span class="font-semibold text-gray-800" id="profile-display-apt">Квартира не вказана</span>
         </div>
 
         <!-- 2. Форма редактирования профиля (по умолчанию скрыта) -->
-        <div id="edit-profile-form" class="hidden mt-4 pt-4 space-y-3" style="border-top:1px solid var(--line-soft);">
+        <div id="edit-profile-form" class="hidden mt-4 pt-4 border-t border-gray-100 space-y-3">
             <div>
-                <label class="field-label">Ваше ім'я</label>
-                <input type="text" id="edit-name" placeholder="Олександр" class="field" style="padding:11px 14px; border-radius:14px; font-size:14px;">
+                <label class="block text-xs font-semibold text-gray-500 mb-1">Ваше ім'я</label>
+                <input type="text" id="edit-name" placeholder="Олександр" class="w-full bg-gray-50 border border-gray-200 rounded-[14px] px-3 py-2.5 text-sm focus:outline-none focus:border-blue-500">
             </div>
             <div>
-                <label class="field-label">Номер телефону</label>
-                <input type="tel" id="edit-phone" placeholder="+380..." class="field" style="padding:11px 14px; border-radius:14px; font-size:14px;">
+                <label class="block text-xs font-semibold text-gray-500 mb-1">Номер телефону</label>
+                <input type="tel" id="edit-phone" placeholder="+380..." class="w-full bg-gray-50 border border-gray-200 rounded-[14px] px-3 py-2.5 text-sm focus:outline-none focus:border-blue-500">
             </div>
             <div>
-                <label class="field-label">Номер квартири</label>
-                <input type="text" id="edit-apt" placeholder="кв. 45" class="field" style="padding:11px 14px; border-radius:14px; font-size:14px;">
+                <label class="block text-xs font-semibold text-gray-500 mb-1">Номер квартиры</label>
+                <input type="text" id="edit-apt" placeholder="кв. 45" class="w-full bg-gray-50 border border-gray-200 rounded-[14px] px-3 py-2.5 text-sm focus:outline-none focus:border-blue-500">
             </div>
-            <button id="save-profile-btn" class="btn btn-primary w-full" style="padding:12px; border-radius:14px; font-size:14px;">
+            <button id="save-profile-btn" class="w-full bg-blue-600 text-white font-semibold py-2.5 rounded-[14px] text-sm shadow-md shadow-blue-200 active:scale-95 transition">
                 Зберегти зміни
             </button>
         </div>
     </div>
 
     <!-- 3. Карточка программы лояльности -->
-    <div class="hero-card p-5" style="border-radius:24px;">
+    <div class="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-[24px] p-5 text-white shadow-lg shadow-blue-200 relative overflow-hidden">
+        <div class="absolute -right-4 -bottom-4 w-24 h-24 bg-white/10 rounded-full blur-xl pointer-events-none"></div>
         <div class="flex justify-between items-start mb-3">
             <div>
-                <span class="eyebrow" style="color:rgba(255,255,255,.75);">Персональний статус</span>
-                <h3 style="font-weight:800; font-size:16.5px; margin-top:3px;">Pralnya Club 💙</h3>
+                <span class="text-[10px] font-uppercase tracking-wider opacity-80 uppercase">Персональний статус</span>
+                <h3 class="font-bold text-lg">Pralnya Club 💙</h3>
             </div>
-            <span id="profile-discount-badge" class="badge" style="background:rgba(255,255,255,.2); color:#fff;">
+            <span class="bg-white/20 backdrop-blur-md px-3 py-1 rounded-full text-xs font-bold" id="profile-discount-badge">
                 Знижка 0%
             </span>
         </div>
-        <p style="font-size:12px; opacity:.85; line-height:1.5;">
+        <p class="text-xs text-blue-100 leading-relaxed">
             Регулярно замовляйте послуги пральні та ательє, щоб отримувати бонуси та персональні знижки!
         </p>
     </div>
@@ -488,22 +624,22 @@
     <!-- 4. Секция активных и прошлых заказов -->
     <div>
         <div class="flex items-center justify-between mb-3 px-1">
-            <h3 style="font-weight:800; font-size:15px; color:var(--ink);">Мої замовлення</h3>
-            <button id="refresh-orders-btn" class="flex items-center gap-1.5" style="font-size:12px; font-weight:700; color:var(--indigo);">
-                <svg style="width:13px;height:13px;"><use href="#i-refresh"/></svg> Оновити
+            <h3 class="font-bold text-gray-900 text-base">Мої замовлення</h3>
+            <button id="refresh-orders-btn" class="text-xs text-blue-600 font-semibold flex items-center gap-1 active:scale-95 transition">
+                🔄 Оновити
             </button>
         </div>
 
         <!-- Контейнер для динамического списка заказов -->
         <div id="orders-list-container" class="space-y-3">
-            <div class="card p-6 text-center" style="color:var(--ink-faint); font-size:13px;">
+            <!-- Сюда JS подставит карточки заказов или сообщение "Нет заказов" -->
+            <div class="bg-white rounded-[20px] p-6 text-center text-gray-400 text-sm border border-gray-100 shadow-sm">
                 Завантаження замовлень...
             </div>
         </div>
     </div>
 
 </section>
-
 <!-- ===================================== -->
 <!-- ATELIER PAGE -->
 <!-- ===================================== -->
@@ -511,220 +647,243 @@
     <section class="mb-6">
         <div class="flex justify-between items-center">
             <div>
-                <div class="eyebrow">Pralnya Vdoma</div>
-                <h1 class="font-display font-bold" style="font-size:25px; margin-top:6px;">Ательє</h1>
-                <p style="font-size:13.5px; color:var(--ink-soft); margin-top:8px;">Ремонт та реставрація вашого одягу</p>
+                <div class="text-sm text-gray-500">Pralnya Vdoma</div>
+                <h1 class="text-3xl font-bold mt-1">🧵 Ательє</h1>
+                <p class="text-gray-500 mt-2">Ремонт та реставрація вашого одягу</p>
             </div>
-            <div class="icon-badge on-gold" style="width:58px;height:58px;">
-                <svg style="width:27px;height:27px;"><use href="#i-scissors"/></svg>
+            <div class="w-16 h-16 rounded-3xl bg-indigo-100 flex items-center justify-center text-4xl">
+                ✂️
             </div>
         </div>
     </section>
 
-    <div class="flex items-center justify-between mb-4">
-        <h2 style="font-weight:800; font-size:17px; color:var(--ink);">Послуги ательє</h2>
-        <button id="closeAtelierBtn" class="icon-btn" style="width:34px;height:34px;">
-            <svg style="width:15px;height:15px;"><use href="#i-close"/></svg>
-        </button>
-    </div>
+   <!-- Шапка Ателье с кнопкой отмены (-) -->
+<div class="flex items-center justify-between mb-4">
+    <h2 class="text-xl font-bold text-gray-800">Послуги ательє</h2>
+    
+    <!-- Кнопка «Минус» (Отмена / Назад) -->
+    <button id="closeAtelierBtn" class="w-9 h-9 flex items-center justify-center bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold rounded-full transition-colors">
+        ✕
+    </button>
+</div>
 
-    <div id="atelier-list" class="grid grid-cols-1 gap-3">
-        <!-- Заполняется через JS -->
-    </div>
+<!-- Список услуг ателье -->
+<div id="atelier-list" class="grid grid-cols-1 gap-4">
+    <!-- Заполняется через JS -->
+</div>
 </main>
-
 <!-- ===================================== -->
-<!-- B2B PAGE -->
+<!-- B2B PAGE (Для бізнесу) -->
 <!-- ===================================== -->
 <main id="b2b-page" class="hidden px-5 py-5 pb-24">
-
+    
     <section class="mb-6">
-        <div class="eyebrow">Pralnya Vdoma</div>
-        <h1 class="font-display font-bold flex items-center gap-2.5" style="font-size:25px; margin-top:6px;">
-            <svg style="width:24px;height:24px;color:var(--indigo);"><use href="#i-building"/></svg>
-            Для бізнесу
-        </h1>
-        <p style="font-size:13.5px; color:var(--ink-soft); margin-top:8px;">Спеціальні умови для комерційних клієнтів</p>
+        <div class="text-sm text-gray-500">Pralnya Vdoma</div>
+        <h1 class="text-3xl font-bold mt-1">💼 Для бізнесу</h1>
+        <p class="text-gray-500 mt-2">Спеціальні умови для комерційних клієнтів</p>
     </section>
 
     <!-- Блок Переваг -->
-    <section class="grid grid-cols-2 gap-3.5 mb-6">
-        <div class="tile p-4">
-            <div class="icon-badge mb-2.5" style="width:38px;height:38px;">
-                <svg style="width:18px;height:18px;"><use href="#i-truck"/></svg>
-            </div>
-            <div style="font-weight:800; font-size:13px; color:var(--ink);">Безкоштовна доставка</div>
+    <section class="grid grid-cols-2 gap-4 mb-6">
+        <div class="bg-blue-50 rounded-[20px] p-4 border border-blue-100 shadow-sm">
+            <div class="text-2xl mb-2">🚚</div>
+            <div class="font-bold text-sm text-gray-900">Безкоштовна доставка</div>
         </div>
-        <div class="tile p-4">
-            <div class="icon-badge on-gold mb-2.5" style="width:38px;height:38px;">
-                <svg style="width:17px;height:17px;"><use href="#i-check"/></svg>
-            </div>
-            <div style="font-weight:800; font-size:13px; color:var(--ink);">Пріоритетне виконання</div>
+        <div class="bg-indigo-50 rounded-[20px] p-4 border border-indigo-100 shadow-sm">
+            <div class="text-2xl mb-2">⚡</div>
+            <div class="font-bold text-sm text-gray-900">Пріоритетне виконання</div>
         </div>
-        <div class="tile p-4">
-            <div class="mb-2.5 flex items-center justify-center" style="width:38px;height:38px;border-radius:18px;background:var(--good-pale);color:var(--good);">
-                <span style="font-size:17px;font-weight:800;">₴</span>
-            </div>
-            <div style="font-weight:800; font-size:13px; color:var(--ink);">Гнучкі тарифи об'єму</div>
+        <div class="bg-green-50 rounded-[20px] p-4 border border-green-100 shadow-sm">
+            <div class="text-2xl mb-2">💰</div>
+            <div class="font-bold text-sm text-gray-900">Гнучкі тарифи об'єму</div>
         </div>
-        <div class="tile p-4">
-            <div class="icon-badge mb-2.5" style="width:38px;height:38px;">
-                <svg style="width:18px;height:18px;"><use href="#i-user"/></svg>
-            </div>
-            <div style="font-weight:800; font-size:13px; color:var(--ink);">Особистий менеджер</div>
+        <div class="bg-orange-50 rounded-[20px] p-4 border border-orange-100 shadow-sm">
+            <div class="text-2xl mb-2">🤝</div>
+            <div class="font-bold text-sm text-gray-900">Особистий менеджер</div>
         </div>
     </section>
 
     <!-- Форма заявки -->
-    <section class="card p-5 mb-6">
-        <h3 style="font-weight:800; font-size:16px; margin-bottom:16px;">Залишити заявку на співпрацю</h3>
-
+    <section class="bg-white rounded-[24px] p-5 shadow-[0_4px_20px_rgba(0,0,0,0.03)] border border-gray-50/80 mb-6">
+        <h3 class="text-lg font-bold mb-4">Залишити заявку на співпрацю</h3>
+        
         <div class="mb-4">
-            <label class="field-label">Назва компанії / закладу</label>
-            <input type="text" id="b2b-company" placeholder="Наприклад: Салон краси або Ресторан" class="field">
+            <label class="block text-xs text-gray-500 mb-1">Назва компанії / закладу</label>
+            <input type="text" id="b2b-company" placeholder="Наприклад: Салон краси або Ресторан" class="w-full bg-gray-50 border border-gray-200 rounded-[16px] p-4 outline-none focus:border-blue-500 transition-colors text-[15px]">
         </div>
-
+        
         <div class="mb-4">
-            <label class="field-label">Контактний телефон</label>
-            <input type="tel" id="b2b-phone" placeholder="+380" class="field">
+            <label class="block text-xs text-gray-500 mb-1">Контактний телефон</label>
+            <input type="tel" id="b2b-phone" placeholder="+380" class="w-full bg-gray-50 border border-gray-200 rounded-[16px] p-4 outline-none focus:border-blue-500 transition-colors text-[15px]">
         </div>
 
         <div class="mb-5">
-            <label class="field-label">Що потрібно прати?</label>
-            <textarea id="b2b-details" placeholder="Уніформа, скатертини, рушники..." class="field" style="height:80px; resize:none;"></textarea>
+            <label class="block text-xs text-gray-500 mb-1">Що потрібно прати?</label>
+            <textarea id="b2b-details" placeholder="Уніформа, скатертини, рушники..." class="w-full bg-gray-50 border border-gray-200 rounded-[16px] p-4 outline-none focus:border-blue-500 transition-colors text-[15px] h-20 resize-none"></textarea>
         </div>
 
-        <button id="b2b-submit-btn" class="btn btn-dark w-full" style="padding:15px;">
+        <button id="b2b-submit-btn" class="w-full bg-gray-900 text-white font-bold rounded-[16px] py-4 shadow-lg hover:bg-black transition">
             Відправити заявку
         </button>
     </section>
 
 </main>
-
 <!-- ===================================== -->
-<!-- CHECKOUT PAGE -->
+<!-- CHECKOUT PAGE (Оформлення замовлення) -->
 <!-- ===================================== -->
 <main id="checkout-page" class="hidden px-5 py-5 pb-24">
-
+    
+    <!-- Шапка з кнопкою Назад -->
     <section class="mb-6 flex items-center gap-4">
-        <button id="checkout-back-btn" class="icon-btn" style="width:40px;height:40px; background:var(--surface); box-shadow:var(--shadow-card);">
-            <svg style="width:17px;height:17px;"><use href="#i-arrow-left"/></svg>
+        <button id="checkout-back-btn" class="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-sm text-xl text-gray-600 hover:bg-gray-50 transition">
+            ←
         </button>
-        <h1 class="font-display font-bold" style="font-size:24px;">Оформлення</h1>
+        <h1 class="text-3xl font-bold">Оформлення</h1>
     </section>
 
     <!-- Чек (Список послуг) -->
-    <section class="card p-5 mb-6">
-        <h3 style="font-weight:800; font-size:15.5px; margin-bottom:14px;">Ваше замовлення</h3>
-
-        <div id="checkout-items" class="divide-y" style="border-color:var(--line-soft);">
-            <!-- Тут будут товары з JS -->
+    <section class="bg-white rounded-[24px] p-5 shadow-[0_4px_20px_rgba(0,0,0,0.03)] border border-gray-50/80 mb-6">
+        <h3 class="text-lg font-bold mb-4">Ваше замовлення</h3>
+        
+        <div id="checkout-items" class="divide-y divide-gray-100">
+            <!-- Тут будуть товари з JS -->
         </div>
-
-        <div class="flex justify-between items-center pt-4 mt-2" style="border-top:1px solid var(--line-soft); font-weight:800; font-size:16px;">
+        
+        <div class="flex justify-between items-center pt-4 mt-2 font-bold text-lg border-t border-gray-100">
             <span>Разом:</span>
-            <span id="checkout-total-price" style="color:var(--indigo);">0 ₴</span>
+            <span id="checkout-total-price" class="text-blue-600">0 ₴</span>
         </div>
     </section>
 
     <!-- Деталі доставки -->
-    <section class="card p-5 mb-6">
-        <h3 style="font-weight:800; font-size:15.5px; margin-bottom:14px;">Деталі доставки</h3>
-
+    <section class="bg-white rounded-[24px] p-5 shadow-[0_4px_20px_rgba(0,0,0,0.03)] border border-gray-50/80 mb-6">
+        <h3 class="text-lg font-bold mb-4">Деталі доставки</h3>
+        
         <div class="mb-4">
-            <label class="field-label">Адреса (ЖК, квартира)</label>
-            <input type="text" id="checkout-address" placeholder="Введіть адресу" class="field">
+            <label class="block text-xs text-gray-500 mb-1">Адреса (ЖК, квартира)</label>
+            <input type="text" id="checkout-address" placeholder="Введіть адресу" class="w-full bg-gray-50 border border-gray-200 rounded-[16px] p-4 outline-none focus:border-blue-500 transition-colors text-[15px]">
         </div>
-
+        
         <div>
-            <label class="field-label">Коментар кур'єру</label>
-            <textarea id="checkout-comment" placeholder="Наприклад: забрати о 19:00" class="field" style="height:80px; resize:none;"></textarea>
+            <label class="block text-xs text-gray-500 mb-1">Коментар кур'єру</label>
+            <textarea id="checkout-comment" placeholder="Наприклад: забрати о 19:00" class="w-full bg-gray-50 border border-gray-200 rounded-[16px] p-4 outline-none focus:border-blue-500 transition-colors text-[15px] h-20 resize-none"></textarea>
         </div>
     </section>
 
-    <button id="confirm-order-btn" class="btn btn-primary w-full" style="padding:16px;">
+    <!-- Кнопка підтвердження -->
+    <button id="confirm-order-btn" class="w-full bg-blue-600 text-white font-bold rounded-[16px] py-4 shadow-[0_8px_20px_rgba(37,99,235,0.2)] hover:bg-blue-700 transition">
         Підтвердити замовлення
     </button>
 </main>
+  <nav
+    id="bottom-nav"
+    class="fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-2xl border-t border-white/60 shadow-[0_-10px_40px_rgba(0,0,0,0.04)] z-50">
 
-<!-- ===================================== -->
-<!-- BOTTOM NAV -->
-<!-- ===================================== -->
-<nav id="bottom-nav" class="fixed bottom-0 left-0 right-0 z-50">
     <div class="grid grid-cols-3 h-20 items-center">
 
+        <!-- Головна -->
         <button class="nav-btn active" data-page="home">
-            <svg><use href="#i-home"/></svg>
-            <span class="label">Головна</span>
+            <span class="text-2xl">🏠</span>
+            <span class="text-xs mt-1 font-medium">Головна</span>
         </button>
 
-        <button class="nav-btn" data-page="order">
-            <svg><use href="#i-basket"/></svg>
-            <span class="label">Послуги</span>
-        </button>
+        <!-- Асистент -->
+<button class="nav-btn" data-page="ai">
+    <span class="text-2xl">🤖</span> 
+    <span class="text-xs mt-1 font-medium">Асистент</span>
+</button>
 
+        <!-- Кабінет -->
         <button class="nav-btn" data-page="profile">
-            <svg><use href="#i-user"/></svg>
-            <span class="label">Кабінет</span>
+            <span class="text-2xl">👤</span>
+            <span class="text-xs mt-1 font-medium">Кабінет</span>
         </button>
+
     </div>
 </nav>
-
-<!-- ===================================== -->
+    <!-- ===================================== -->
 <!-- FLOATING CART -->
 <!-- ===================================== -->
-<div id="floating-cart" class="hidden fixed bottom-24 left-5 right-5 z-40">
-    <button class="cart-pill w-full px-6 py-4 flex justify-between items-center">
-        <div class="text-left">
-            <div style="font-size:12px; opacity:.8;">Кошик</div>
-            <div id="cart-count" style="font-weight:700; font-size:16px;">0 товарів</div>
+
+<div id="floating-cart"class="hidden fixed bottom-24 left-5 right-5 z-40">
+    <button
+        class="w-full rounded-2xl bg-blue-600 text-white shadow-2xl px-6 py-4 flex justify-between items-center">
+
+        <div>
+
+            <div class="text-sm opacity-80">
+
+                Кошик
+
+            </div>
+
+            <div
+                id="cart-count"
+
+                class="font-bold text-lg">
+
+                0 товарів
+
+            </div>
+
         </div>
-        <div class="text-right flex items-center gap-2">
-            <div id="cart-price" class="font-display" style="font-weight:700; font-size:21px;">0 ₴</div>
-            <svg style="width:18px;height:18px;"><use href="#i-chevron"/></svg>
+
+        <div class="text-right">
+
+            <div
+                id="cart-price"
+
+                class="font-bold text-2xl">
+
+                0 ₴
+
+            </div>
+
         </div>
+
     </button>
+
 </div>
-
 <!-- ===================================== -->
-<!-- MODALS (Шторки) — вне обычного потока навигации, оставлены на будущее -->
+<!-- MODALS (Шторки) -->
 <!-- ===================================== -->
 
-<div id="modal-overlay" class="hidden fixed inset-0 z-[100] backdrop-blur-sm transition-opacity duration-300 opacity-0" style="background:rgba(11,13,34,.45);"></div>
+<!-- Темный фон (Overlay) -->
+<div id="modal-overlay" class="hidden fixed inset-0 bg-black/40 z-[100] backdrop-blur-sm transition-opacity duration-300 opacity-0"></div>
 
-<div id="modal-address" class="hidden fixed bottom-0 left-0 right-0 z-[110] p-6 pb-10 transform transition-transform duration-300 translate-y-full" style="background:var(--surface); border-radius:28px 28px 0 0;">
-    <div class="mx-auto mb-6" style="width:44px;height:5px;border-radius:99px;background:var(--line);"></div>
-    <h3 class="font-display font-bold mb-4" style="font-size:18px;">Ваша адреса</h3>
-    <input type="text" id="address-input" placeholder="Вулиця, будинок, квартира" class="field mb-4">
-    <button id="save-address-btn" class="btn btn-primary w-full" style="padding:15px;">
+<!-- Шторка: АДРЕС -->
+<div id="modal-address" class="hidden fixed bottom-0 left-0 right-0 bg-white rounded-t-[32px] p-6 z-[110] transform transition-transform duration-300 translate-y-full pb-10">
+    <div class="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-6"></div>
+    <h3 class="text-xl font-bold mb-4">📍 Ваша адреса</h3>
+    <input type="text" id="address-input" placeholder="Вулиця, будинок, квартира" class="w-full bg-gray-50 border border-gray-200 rounded-[16px] p-4 outline-none focus:border-blue-500 transition-colors mb-4 text-[15px]">
+    <button id="save-address-btn" class="w-full bg-blue-600 text-white font-bold rounded-[16px] py-4 shadow-[0_8px_20px_rgba(37,99,235,0.2)] hover:bg-blue-700 transition">
         Зберегти адресу
     </button>
 </div>
 
-<div id="modal-payment" class="hidden fixed bottom-0 left-0 right-0 z-[110] p-6 pb-10 transform transition-transform duration-300 translate-y-full" style="background:var(--surface); border-radius:28px 28px 0 0;">
-    <div class="mx-auto mb-6" style="width:44px;height:5px;border-radius:99px;background:var(--line);"></div>
-    <h3 class="font-display font-bold mb-4" style="font-size:18px;">Способи оплати</h3>
-
-    <div class="tile flex items-center justify-between p-4 mb-4">
+<!-- Шторка: ОПЛАТА -->
+<div id="modal-payment" class="hidden fixed bottom-0 left-0 right-0 bg-white rounded-t-[32px] p-6 z-[110] transform transition-transform duration-300 translate-y-full pb-10">
+    <div class="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-6"></div>
+    <h3 class="text-xl font-bold mb-4">💳 Способи оплати</h3>
+    
+    <div class="bg-gray-50 rounded-[16px] p-4 flex items-center justify-between border border-gray-200 mb-4">
         <div class="flex items-center gap-3">
-            <div class="icon-badge" style="width:36px;height:36px;">📱</div>
-            <div style="font-weight:700; font-size:14px;">Apple Pay / Google Pay</div>
+            <div class="text-2xl">📱</div>
+            <div class="font-bold text-[15px]">Apple Pay / Google Pay</div>
         </div>
-        <div class="badge badge-good">Активно</div>
+        <div class="text-green-600 text-xs font-bold bg-green-100 px-2 py-1 rounded-md">Активно</div>
     </div>
-
-    <button class="btn btn-dark w-full" style="padding:15px;">
+    
+    <button class="w-full bg-gray-900 text-white font-bold rounded-[16px] py-4 shadow-lg hover:bg-black transition">
         Додати нову картку
     </button>
 </div>
-
-<!-- Плаваюча кнопка AI -->
-<button id="ai-toggle-btn" onclick="openAIPage()" class="fixed bottom-24 right-4 z-50 overflow-hidden" style="width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg, var(--indigo), var(--indigo-deep));box-shadow:var(--shadow-pop);border:0;padding:0;cursor:pointer;">
+<!-- Плаваюча кнопка AI 
+<button id="ai-toggle-btn" onclick="openAIPage()" class="fixed bottom-24 right-4 z-50 w-14 h-14 bg-blue-600 rounded-full shadow-xl border-0 p-0 cursor-pointer active:scale-95 transition-transform overflow-hidden block">
     <div class="absolute inset-0 bg-no-repeat bg-center pointer-events-none" style="background-image: url('./simple-bot.png'); background-size: 230%;"></div>
-</button>
-
+</button> -->
 <script src="data.js"></script>
 <script src="services.js"></script>
-<script src="app.js?v=13"></script>
+<script src="app.js?v=11"></script>
 </body>
 </html>
