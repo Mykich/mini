@@ -611,36 +611,45 @@ shadow-xl">
         </div>
     </div>
 
-    <!-- 3. Карточка программы лояльности -->
-    <div class="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-[24px] p-5 text-white shadow-lg shadow-blue-200 relative overflow-hidden">
-        <div class="absolute -right-4 -bottom-4 w-24 h-24 bg-white/10 rounded-full blur-xl pointer-events-none"></div>
-        <div class="flex justify-between items-start mb-3">
-            <div>
-                <span class="text-[10px] font-uppercase tracking-wider opacity-80 uppercase">Персональний статус</span>
-                <h3 class="font-bold text-lg">Pralnya Club 💙</h3>
+    <!-- 3. Карточка программы лояльности (Премиум Glassmorphism) -->
+    <div class="relative overflow-hidden rounded-[28px] bg-gradient-to-br from-blue-600 via-indigo-600 to-blue-700 p-6 text-white shadow-[0_16px_36px_-10px_rgba(37,99,235,0.35)] transition-all active:scale-[0.99] mb-6">
+        <!-- Декоративные фоновые блики -->
+        <div class="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-white/10 blur-2xl"></div>
+        <div class="pointer-events-none absolute -bottom-10 -left-10 h-32 w-32 rounded-full bg-blue-400/20 blur-xl"></div>
+        
+        <div class="relative z-10 flex flex-col justify-between space-y-6">
+            <div class="flex items-start justify-between">
+                <div>
+                    <span class="text-[11px] font-bold uppercase tracking-widest text-blue-200/90">Персональний статус</span>
+                    <h3 class="mt-0.5 text-2xl font-black tracking-tight text-white flex items-center gap-1.5">
+                        Pralnya Club <span class="text-blue-300">✦</span>
+                    </h3>
+                </div>
+                <span id="profile-discount-badge" class="rounded-full bg-white/15 px-3.5 py-1.5 text-xs font-bold text-white backdrop-blur-md border border-white/20 shadow-inner">
+                    Знижка 0%
+                </span>
             </div>
-            <span class="bg-white/20 backdrop-blur-md px-3 py-1 rounded-full text-xs font-bold" id="profile-discount-badge">
-                Знижка 0%
-            </span>
+
+            <p class="text-xs font-normal leading-relaxed text-blue-100/90 max-w-[240px]">
+                Отримуйте бонуси та персональне обслуговування при кожному замовленні.
+            </p>
         </div>
-        <p class="text-xs text-blue-100 leading-relaxed">
-            Регулярно замовляйте послуги пральні та ательє, щоб отримувати бонуси та персональні знижки!
-        </p>
     </div>
 
     <!-- 4. Секция активных и прошлых заказов -->
     <div>
-        <div class="flex items-center justify-between mb-3 px-1">
-            <h3 class="font-bold text-gray-900 text-base">Мої замовлення</h3>
-            <button id="refresh-orders-btn" class="text-xs text-blue-600 font-semibold flex items-center gap-1 active:scale-95 transition">
-                🔄 Оновити
+        <div class="flex items-center justify-between mb-4 px-1">
+            <h3 class="font-bold text-slate-900 text-[17px]">Мої замовлення</h3>
+            <button id="refresh-orders-btn" class="text-xs text-blue-600 font-bold flex items-center gap-1.5 active:scale-95 transition-transform bg-blue-50 px-3 py-1.5 rounded-full">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                Оновити
             </button>
         </div>
 
         <!-- Контейнер для динамического списка заказов -->
-        <div id="orders-list-container" class="space-y-3">
+        <div id="orders-list-container" class="space-y-4">
             <!-- Сюда JS подставит карточки заказов или сообщение "Нет заказов" -->
-            <div class="bg-white rounded-[20px] p-6 text-center text-gray-400 text-sm border border-gray-100 shadow-sm">
+            <div class="bg-white rounded-[24px] p-6 text-center text-slate-400 text-sm border border-slate-100 shadow-[0_4px_12px_rgba(0,0,0,0.02)]">
                 Завантаження замовлень...
             </div>
         </div>
