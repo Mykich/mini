@@ -2,6 +2,56 @@
 // Pralnya Vdoma Mini App
 // Version 1.3 - Pages, Logic, Profile & Nav
 // ======================================
+// Инициализация Telegram WebApp API
+const tg = window.Telegram.WebApp;
+
+// Разворачиваем Mini App на весь экран смартфона
+tg.expand();
+
+// Настройка цветовой темы (адаптация под тему Telegram)
+if (tg.setHeaderColor) {
+    tg.setHeaderColor('secondary_bg_color');
+}
+
+// Заполнение профиля данными из Telegram
+function initTelegramUser() {
+    const user = tg.initDataUnsafe?.user;
+
+    if (user) {
+        // Имя и Фамилия
+        const nameEl = document.getElementById("user-name");
+        if (nameEl) {
+            const fullName = [user.first_name, user.last_name].filter(Boolean).join(" ");
+            nameEl.textContent = fullName || "Шановний клієнт";
+        }
+
+        // Юзернейм или Telegram ID
+        const idEl = document.getElementById("user-id");
+        if (idEl) {
+            idEl.textContent = user.username ? `@${user.username}` : `ID: ${user.id}`;
+        }
+
+        // Аватарка из профиля
+        const avatarEl = document.getElementById("user-avatar");
+        if (avatarEl && user.photo_url) {
+            avatarEl.src = user.photo_url;
+        }
+    }
+}
+
+// Универсальная функция виброотклика (добавляй её на клики по кнопкам)
+function triggerHaptic(style = 'light') {
+    if (tg.HapticFeedback) {
+        tg.HapticFeedback.impactOccurred(style);
+    }
+}
+
+// Сообщаем Telegram, что интерфейс готов к показу
+document.addEventListener("DOMContentLoaded", () => {
+    initTelegramUser();
+    tg.ready();
+});
+
 
 // 1. Инициализация Telegram
 const tg = window.Telegram?.WebApp;
