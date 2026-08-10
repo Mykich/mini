@@ -2,20 +2,23 @@
 // Pralnya Vdoma Mini App
 // Version 1.3 - Pages, Logic, Profile & Nav
 // ======================================
-// Инициализация Telegram WebApp API
-const tg = window.Telegram.WebApp;
+// Инициализация Telegram WebApp API (безопасное объявление)
+window.tg = window.tg || window.Telegram?.WebApp;
+var tg = window.tg;
 
 // Разворачиваем Mini App на весь экран смартфона
-tg.expand();
+if (tg?.expand) {
+    tg.expand();
+}
 
 // Настройка цветовой темы (адаптация под тему Telegram)
-if (tg.setHeaderColor) {
+if (tg?.setHeaderColor) {
     tg.setHeaderColor('secondary_bg_color');
 }
 
 // Заполнение профиля данными из Telegram
 function initTelegramUser() {
-    const user = tg.initDataUnsafe?.user;
+    const user = tg?.initDataUnsafe?.user;
 
     if (user) {
         // Имя и Фамилия
