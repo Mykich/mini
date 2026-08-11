@@ -1,43 +1,42 @@
 // ======================================
 // Pralnya Vdoma
-// Services Catalog v1.0
+// Services Catalog v1.1
 // ======================================
 
 const servicesData = {
-    // Добавь это внутрь объекта servicesData в services.js:
-atelier: [
-    {
-        id: 601,
-        name: "Підшити штани / джинси",
-        description: "Збереження оригінального низу",
-        price: 300,
-        category: "atelier"
-    },
-    {
-        id: 602,
-        name: "Ремонт шва",
-        description: "Відновлення цілісності виробу",
-        price: 250,
-        category: "atelier"
-    },
-    {
-        id: 603,
-        name: "Заміна блискавки",
-        description: "Якісна фурнітура (без вартості блискавки)",
-        price: 400,
-        category: "atelier"
-    },
-    {
-        id: 604,
-        name: "Укоротити сукню / спідницю",
-        description: "Точний підгін по фігурі",
-        price: 450,
-        category: "atelier"
-    }
-],
+
+    atelier: [
+        {
+            id: 601,
+            name: "Підшити штани / джинси",
+            description: "Збереження оригінального низу",
+            price: 300,
+            category: "atelier"
+        },
+        {
+            id: 602,
+            name: "Ремонт шва",
+            description: "Відновлення цілісності виробу",
+            price: 250,
+            category: "atelier"
+        },
+        {
+            id: 603,
+            name: "Заміна блискавки",
+            description: "Якісна фурнітура (без вартості блискавки)",
+            price: 400,
+            category: "atelier"
+        },
+        {
+            id: 604,
+            name: "Укоротити сукню / спідницю",
+            description: "Точний підгін по фігурі",
+            price: 450,
+            category: "atelier"
+        }
+    ],
 
     clothing: [
-
         {
             id: 1,
             name: "Футболка",
@@ -46,7 +45,6 @@ atelier: [
             category: "clothing",
             image: "images/services/tshirt.png"
         },
-
         {
             id: 2,
             name: "Майка",
@@ -55,7 +53,6 @@ atelier: [
             category: "clothing",
             image: "images/services/tanktop.png"
         },
-
         {
             id: 3,
             name: "Сорочка",
@@ -64,7 +61,6 @@ atelier: [
             category: "clothing",
             image: "images/services/shirt.png"
         },
-
         {
             id: 4,
             name: "Блуза",
@@ -73,7 +69,6 @@ atelier: [
             category: "clothing",
             image: "images/services/blouse.png"
         },
-
         {
             id: 5,
             name: "Светр",
@@ -82,7 +77,6 @@ atelier: [
             category: "clothing",
             image: "images/services/sweater.png"
         },
-
         {
             id: 6,
             name: "Худі",
@@ -91,7 +85,6 @@ atelier: [
             category: "clothing",
             image: "images/services/hoodie.png"
         },
-
         {
             id: 7,
             name: "Джинси",
@@ -100,7 +93,6 @@ atelier: [
             category: "clothing",
             image: "images/services/jeans.png"
         },
-
         {
             id: 8,
             name: "Брюки",
@@ -109,7 +101,6 @@ atelier: [
             category: "clothing",
             image: "images/services/trousers.png"
         },
-
         {
             id: 9,
             name: "Спідниця",
@@ -118,7 +109,6 @@ atelier: [
             category: "clothing",
             image: "images/services/skirt.png"
         },
-
         {
             id: 10,
             name: "Сукня",
@@ -127,11 +117,9 @@ atelier: [
             category: "clothing",
             image: "images/services/dress.png"
         }
-
     ],
 
     outerwear: [
-
         {
             id: 101,
             name: "Вітровка",
@@ -140,7 +128,6 @@ atelier: [
             category: "outerwear",
             image: "images/services/windbreaker.png"
         },
-
         {
             id: 102,
             name: "Куртка",
@@ -149,7 +136,6 @@ atelier: [
             category: "outerwear",
             image: "images/services/jacket.png"
         },
-
         {
             id: 103,
             name: "Пальто",
@@ -158,7 +144,6 @@ atelier: [
             category: "outerwear",
             image: "images/services/coat.png"
         },
-
         {
             id: 104,
             name: "Пуховик короткий",
@@ -167,7 +152,6 @@ atelier: [
             category: "outerwear",
             image: "images/services/down-short.png"
         },
-
         {
             id: 105,
             name: "Пуховик довгий",
@@ -176,11 +160,9 @@ atelier: [
             category: "outerwear",
             image: "images/services/down-long.png"
         }
-
     ],
 
     textile: [
-
         {
             id: 201,
             name: "Комплект постелі",
@@ -189,7 +171,6 @@ atelier: [
             category: "textile",
             image: "images/services/bedding.png"
         },
-
         {
             id: 202,
             name: "Плед",
@@ -198,7 +179,6 @@ atelier: [
             category: "textile",
             image: "images/services/plaid.png"
         },
-
         {
             id: 203,
             name: "Ковдра",
@@ -207,7 +187,6 @@ atelier: [
             category: "textile",
             image: "images/services/blanket.png"
         },
-
         {
             id: 204,
             name: "Подушка",
@@ -215,12 +194,66 @@ atelier: [
             price: 350,
             category: "textile",
             image: "images/services/pillow.png"
+        },
+        {
+            id: 205,
+            name: "Ковдра пухова",
+            description: "Преміальний догляд за пуховим наповнювачем",
+            price: 1200,
+            category: "textile",
+            image: "images/services/down-blanket.png"
+        },
+        {
+            id: 206,
+            name: "Подушка велика (50х60–70х70)",
+            description: "Антибактеріальна обробка",
+            price: 700,
+            category: "textile",
+            image: "images/services/pillow-large.png"
+        },
+        {
+            id: 207,
+            name: "М'яка іграшка",
+            description: "Дбайливе прання та сушіння",
+            price: 550,
+            category: "textile",
+            image: "images/services/toy.png"
+        },
+        {
+            id: 208,
+            name: "Покривало",
+            description: "Прання та прасування",
+            price: 850,
+            category: "textile",
+            image: "images/services/bedspread.png"
+        },
+        {
+            id: 209,
+            name: "Тюль / органза",
+            description: "Ціна за 1 м² — у кількості вкажіть площу виробу в м²",
+            price: 220,
+            category: "textile",
+            image: "images/services/tulle.png"
+        },
+        {
+            id: 210,
+            name: "Штори прості",
+            description: "Ціна за 1 м² — у кількості вкажіть площу виробу в м²",
+            price: 380,
+            category: "textile",
+            image: "images/services/curtains.png"
+        },
+        {
+            id: 211,
+            name: "Штори щільні / на підкладці",
+            description: "Ціна за 1 м² — у кількості вкажіть площу виробу в м²",
+            price: 480,
+            category: "textile",
+            image: "images/services/curtains-heavy.png"
         }
-
     ],
 
     shoes: [
-
         {
             id: 301,
             name: "Кросівки",
@@ -229,7 +262,6 @@ atelier: [
             category: "shoes",
             image: "images/services/sneakers.png"
         },
-
         {
             id: 302,
             name: "Черевики",
@@ -238,11 +270,9 @@ atelier: [
             category: "shoes",
             image: "images/services/boots.png"
         }
-
     ],
 
     accessories: [
-
         {
             id: 401,
             name: "Рюкзак",
@@ -251,7 +281,6 @@ atelier: [
             category: "accessories",
             image: "images/services/backpack.png"
         },
-
         {
             id: 402,
             name: "Сумка",
@@ -259,12 +288,26 @@ atelier: [
             price: 650,
             category: "accessories",
             image: "images/services/bag.png"
+        },
+        {
+            id: 403,
+            name: "Краватка",
+            description: "Чистка та прасування",
+            price: 150,
+            category: "accessories",
+            image: "images/services/tie.png"
+        },
+        {
+            id: 404,
+            name: "Шарф / Хустка",
+            description: "Делікатне прання",
+            price: 300,
+            category: "accessories",
+            image: "images/services/scarf.png"
         }
-
     ],
 
     aquaclean: [
-
         {
             id: 501,
             name: "Весільна сукня",
@@ -273,7 +316,6 @@ atelier: [
             category: "aquaclean",
             image: "images/services/wedding.png"
         },
-
         {
             id: 502,
             name: "Кашемір",
@@ -282,9 +324,167 @@ atelier: [
             category: "aquaclean",
             image: "images/services/cashmere.png"
         }
+    ],
 
+    ironing: [
+        {
+            id: 701,
+            name: "Футболка",
+            description: "Тільки прасування, без прання",
+            price: 90,
+            category: "ironing",
+            image: "images/services/iron-tshirt.png"
+        },
+        {
+            id: 702,
+            name: "Сорочка",
+            description: "Тільки прасування, без прання",
+            price: 130,
+            category: "ironing",
+            image: "images/services/iron-shirt.png"
+        },
+        {
+            id: 703,
+            name: "Джинси",
+            description: "Тільки прасування, без прання",
+            price: 100,
+            category: "ironing",
+            image: "images/services/iron-jeans.png"
+        },
+        {
+            id: 704,
+            name: "Брюки зі стрілками",
+            description: "Тільки прасування, без прання",
+            price: 180,
+            category: "ironing",
+            image: "images/services/iron-trousers.png"
+        },
+        {
+            id: 705,
+            name: "Спідниця коротка",
+            description: "Тільки прасування, без прання",
+            price: 100,
+            category: "ironing",
+            image: "images/services/iron-skirt-short.png"
+        },
+        {
+            id: 706,
+            name: "Спідниця довга",
+            description: "Тільки прасування, без прання",
+            price: 150,
+            category: "ironing",
+            image: "images/services/iron-skirt-long.png"
+        },
+        {
+            id: 707,
+            name: "Сукня",
+            description: "Тільки прасування, без прання",
+            price: 250,
+            category: "ironing",
+            image: "images/services/iron-dress.png"
+        },
+        {
+            id: 708,
+            name: "Блуза",
+            description: "Тільки прасування, без прання",
+            price: 180,
+            category: "ironing",
+            image: "images/services/iron-blouse.png"
+        },
+        {
+            id: 709,
+            name: "Кофта / Светр",
+            description: "Тільки прасування, без прання",
+            price: 200,
+            category: "ironing",
+            image: "images/services/iron-sweater.png"
+        },
+        {
+            id: 710,
+            name: "Краватка",
+            description: "Тільки прасування, без прання",
+            price: 100,
+            category: "ironing",
+            image: "images/services/iron-tie.png"
+        },
+        {
+            id: 711,
+            name: "Комплект постільної білизни",
+            description: "Тільки прасування, без прання",
+            price: 200,
+            category: "ironing",
+            image: "images/services/iron-bedding.png"
+        },
+        {
+            id: 712,
+            name: "Піджак",
+            description: "Прасування відпарювачем",
+            price: 180,
+            category: "ironing",
+            image: "images/services/iron-blazer.png"
+        },
+        {
+            id: 713,
+            name: "Пальто",
+            description: "Прасування відпарювачем",
+            price: 320,
+            category: "ironing",
+            image: "images/services/iron-coat.png"
+        },
+        {
+            id: 714,
+            name: "Куртка",
+            description: "Прасування відпарювачем",
+            price: 320,
+            category: "ironing",
+            image: "images/services/iron-jacket.png"
+        }
+    ],
+
+    extra: [
+        {
+            id: 801,
+            name: "Виведення плями",
+            description: "Ціна за одну пляму",
+            price: 80,
+            category: "extra",
+            image: "images/services/stain.png"
+        },
+        {
+            id: 802,
+            name: "Чистка катишків",
+            description: "За одну річ",
+            price: 100,
+            category: "extra",
+            image: "images/services/pilling.png"
+        },
+        {
+            id: 803,
+            name: "Кондиціонування",
+            description: "Додатково до прання, за одне завантаження",
+            price: 30,
+            category: "extra",
+            image: "images/services/conditioner.png"
+        },
+        {
+            id: 804,
+            name: "Відбілювання",
+            description: "Додатково до прання, за одне завантаження",
+            price: 40,
+            category: "extra",
+            image: "images/services/bleach.png"
+        },
+        {
+            id: 805,
+            name: "Накрохмалювання білизни",
+            description: "Для комплекту постільної білизни",
+            price: 200,
+            category: "extra",
+            image: "images/services/starch.png"
+        }
     ]
 
 };
+
 console.log("✅ services.js успешно загружен");
 console.log(servicesData);

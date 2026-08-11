@@ -954,11 +954,11 @@ function renderOrdersList(orders) {
 
     if (!orders || orders.length === 0) {
         container.innerHTML = `
-            <div class="bg-white rounded-[24px] p-8 text-center border border-gray-100 shadow-sm">
-                <div class="text-4xl mb-2">🧺</div>
-                <h4 class="font-bold text-gray-800 text-sm mb-1">У вас поки немає замовлень</h4>
-                <p class="text-xs text-gray-400 mb-4">Оформіть ваше перше замовлення пральні або ательє!</p>
-                <button onclick="showPage('home')" class="bg-blue-50 text-blue-600 font-bold px-4 py-2 rounded-full text-xs active:scale-95 transition">
+            <div class="bg-white rounded-[24px] p-8 text-center border border-slate-100 shadow-[0_4px_12px_rgba(0,0,0,0.02)]">
+                <div class="text-4xl mb-3">🧺</div>
+                <h4 class="font-bold text-slate-900 text-sm mb-1">У вас поки немає замовлень</h4>
+                <p class="text-xs text-slate-500 mb-5">Оформіть ваше перше замовлення пральні або ательє!</p>
+                <button onclick="showPage('home')" class="bg-blue-50 text-blue-600 font-bold px-5 py-2.5 rounded-full text-xs active:scale-95 transition-transform">
                     До каталогу
                 </button>
             </div>
@@ -970,48 +970,57 @@ function renderOrdersList(orders) {
     container.innerHTML = orders.map(order => {
         const isAtelier = order.type === 'atelier';
         const icon = isAtelier ? '✂️' : '🫧';
-        const typeTitle = isAtelier ? 'Ательє' : 'Пральня';
         
-        // Определяем цвет и иконку статуса
-        let statusBg = "bg-gray-100 text-gray-600";
+        // Определяем цвет и иконку статуса с учетом нового дизайна
+        let statusBg = "bg-slate-50 text-slate-600 border-slate-200/50";
+        let dotColor = "bg-slate-400";
+        let dotAnim = "";
         const statusText = order.status || "Прийнято";
 
         if (statusText.includes("Готово") || statusText.includes("Видано")) {
-            statusBg = "bg-emerald-50 text-emerald-600 border border-emerald-100";
+            statusBg = "bg-emerald-50 text-emerald-700 border-emerald-200/50";
+            dotColor = "bg-emerald-500"; // Зеленая точка (без пульсации, так как завершено)
         } else if (statusText.includes("пранн") || statusText.includes("робот")) {
-            statusBg = "bg-blue-50 text-blue-600 border border-blue-100";
+            statusBg = "bg-blue-50 text-blue-700 border-blue-200/50";
+            dotColor = "bg-blue-500";
+            dotAnim = "animate-pulse"; // Пульсирующая синяя точка
         } else if (statusText.includes("огляд") || statusText.includes("Узгодження")) {
-            statusBg = "bg-amber-50 text-amber-600 border border-amber-100";
+            statusBg = "bg-amber-50 text-amber-700 border-amber-200/50";
+            dotColor = "bg-amber-500";
+            dotAnim = "animate-pulse"; // Пульсирующая оранжевая точка
         }
 
         return `
-            <div class="bg-white rounded-[20px] p-4 border border-gray-100 shadow-sm space-y-3">
-                <!-- Шапка карточки -->
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center gap-2">
-                        <span class="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center text-sm shadow-inner">
-                            ${icon}
-                        </span>
-                        <div>
-                            <span class="text-xs font-bold text-gray-800">№ ${order.id}</span>
-                            <span class="text-[10px] text-gray-400 block">${order.date || ''}</span>
-                        </div>
-                    </div>
-                    <span class="text-xs font-semibold px-2.5 py-1 rounded-full ${statusBg}">
-                        ${statusText}
-                    </span>
+            <div class="group relative rounded-[24px] bg-white p-5 border border-slate-100 shadow-[0_10px_25px_-5px_rgba(0,0,0,0.04)] transition-all duration-200 active:scale-[0.98]">
+              
+              <!-- Шапка карточки -->
+              <div class="flex items-center justify-between pb-3.5 border-b border-slate-100">
+                <div class="flex items-center gap-3">
+                  <div class="flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-50 text-xl ring-4 ring-slate-50/50 shadow-inner">
+                    ${icon}
+                  </div>
+                  <div>
+                    <div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">№ ${order.id}</div>
+                    <div class="text-sm font-bold text-slate-800">${order.date || ''}</div>
+                  </div>
                 </div>
 
-                <!-- Содержимое (вещи/услуги) -->
-                <div class="bg-gray-50/70 rounded-[12px] p-2.5 text-xs text-gray-700 leading-relaxed">
-                    ${order.items || 'Послуги'}
-                </div>
+                <span class="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold border ${statusBg}">
+                  <span class="h-1.5 w-1.5 rounded-full ${dotColor} ${dotAnim}"></span>
+                  ${statusText}
+                </span>
+              </div>
 
-                <!-- Сумма -->
-                <div class="flex justify-between items-center pt-1 text-xs">
-                    <span class="text-gray-400">Сума:</span>
-                    <span class="font-bold text-gray-900 text-sm">${order.price}</span>
-                </div>
+              <!-- Содержимое (вещи/услуги) -->
+              <div class="my-3.5 rounded-2xl bg-slate-50/80 p-3 text-xs font-medium text-slate-600 leading-relaxed">
+                ${order.items || 'Послуги'}
+              </div>
+
+              <!-- Сумма -->
+              <div class="flex items-center justify-between pt-2 border-t border-slate-100">
+                <span class="text-xs font-medium text-slate-400">Сума:</span>
+                <span class="text-base font-black text-slate-900">${order.price}</span>
+              </div>
             </div>
         `;
     }).join('');
