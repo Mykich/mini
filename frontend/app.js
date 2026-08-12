@@ -912,6 +912,7 @@ async function fetchCabinetData() {
         if (checkoutAddressInput && data.client.apartment) {
         checkoutAddressInput.value = data.client.apartment;
         }
+        }
 
         // 1.5. Обновляем счётчики на главной ("Замовлень" / "Витрачено")
         updateHomeStats(data.client, data.orders);
@@ -957,6 +958,7 @@ async function fetchCabinetData() {
     } catch (error) {
         console.error("Ошибка обновления кабинета:", error);
     }
+
 }
 
 // Вспомогательная функция для динамического цвета статусов
@@ -970,6 +972,7 @@ function getStatusColor(status) {
     }
     return "bg-gray-100 text-gray-600";
 }
+
 
 // Рахує реальну суму витрат по замовленнях (ательє без ціни до огляду — пропускаємо,
 // так само як на бекенді в /api/cabinet). Використовується і для "Витрачено",
