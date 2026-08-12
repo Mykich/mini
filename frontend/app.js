@@ -291,6 +291,19 @@ if (searchInput) {
         state.search = e.target.value;
         renderSearchResults(state.search);
     });
+
+    // Плавная прокрутка при фокусе (нажатии на поле)
+    searchInput.addEventListener("focus", () => {
+        // Используем таймаут, чтобы дать мобильной клавиатуре 
+        // долю секунды на выезд перед началом скролла
+        setTimeout(() => {
+            // Скроллим так, чтобы родительская секция оказалась в верхней части экрана
+            searchInput.closest('section').scrollIntoView({ 
+                behavior: "smooth", 
+                block: "start" 
+            });
+        }, 300);
+    });
 }
 
 // ======================================
