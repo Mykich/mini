@@ -160,7 +160,7 @@ shadow-xl">
 
                 <div class="text-gray-500 text-sm">
 
-                    Бонуси
+                    Витрачено
 
                 </div>
 
@@ -314,10 +314,35 @@ shadow-xl">
 </section>
 
 <!-- ===================================== -->
+<!-- SEARCH -->
+<!-- ===================================== -->
+
+<section class="mb-6">
+
+    <div
+        class="flex items-center rounded-2xl bg-white shadow-md px-5 py-4">
+
+        <span class="text-2xl mr-3">
+
+            🔍
+
+        </span>
+
+        <input
+            id="search-input"
+            type="text"
+            placeholder="Пошук послуги..."
+            class="w-full outline-none bg-transparent">
+
+    </div>
+
+</section>
+
+<!-- ===================================== -->
 <!-- CATEGORIES -->
 <!-- ===================================== -->
 
-<section class="mb-7">
+<section class="mb-7" id="categories-section">
 
     <div class="flex gap-3 overflow-x-auto pb-2 no-scrollbar">
 
@@ -358,12 +383,32 @@ shadow-xl">
 </section>
 
 <!-- ===================================== -->
+<!-- POPULAR -->
+<!-- ===================================== -->
+
+<section class="mt-7" id="popular-section">
+
+    <h3 class="text-xl font-bold mb-4">
+
+        ⭐ Популярні послуги
+
+    </h3>
+
+    <div id="popular-services" class="flex gap-4 overflow-x-auto pb-2 no-scrollbar">
+
+        <!-- Карточки будуть створюватися JavaScript -->
+
+    </div>
+
+</section>
+
+<!-- ===================================== -->
 <!-- SERVICES CATALOG -->
 <!-- ===================================== -->
 
-<section class="mt-7">
+<section class="mt-7" id="services-catalog-section">
 
-    <h3 class="text-2xl font-bold mb-5">
+    <h3 class="text-2xl font-bold mb-5" id="catalog-title">
 
         Послуги
 
@@ -372,6 +417,12 @@ shadow-xl">
     <div id="products-list" class="space-y-4">
 
         <!-- Карточки будут создаваться JavaScript -->
+
+    </div>
+
+    <div id="search-empty-state" class="hidden text-center text-gray-400 py-10">
+
+        Нічого не знайдено 🤷‍♀️
 
     </div>
 
@@ -433,55 +484,6 @@ shadow-xl">
     </div>
 
 </div>
-
-<!-- ===================================== -->
-<!-- SEARCH -->
-<!-- ===================================== 
-
-<section class="mb-6">
-
-    <div
-        class="flex items-center rounded-2xl bg-white shadow-md px-5 py-4">
-
-        <span class="text-2xl mr-3">
-
-            🔍
-
-        </span>
-
-        <input
-            id="search-input"
-            type="text"
-            placeholder="Пошук послуги..."
-            class="w-full outline-none bg-transparent">
-
-    </div>
-
-</section>
--->
-
-
-
-
-<!-- ===================================== -->
-<!-- POPULAR -->
-<!-- ===================================== -->
-
-<!--<section class="mt-7">
-
-    <h3 class="text-xl font-bold mb-4">
-
-        ⭐ Популярні послуги
-
-    </h3>
-
-    <div id="popular-services">
-
-    </div>
-
-</section> -->
-
-
 
 </main>
 

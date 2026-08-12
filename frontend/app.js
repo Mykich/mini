@@ -118,6 +118,84 @@ if (closeAtelierBtn) {
 // ======================================
 // Рендер Каталога Прачечной
 // ======================================
+// Создаёт карточку товара. onUpdate вызывается после +/- чтобы перерисовать список,
+// в котором эта карточка показана (каталог категории, результаты пошуку, тощо).
+function createServiceCard(product, onUpdate) {
+    // Проверяем, есть ли уже этот товар в корзине и берем его количество
+    const cartItem = state.cart.find(item => item.id === product.id);
+    const quantity = cartItem ? cartItem.quantity : 0;
+
+    const card = document.createElement("div");
+    card.className = `
+        bg-white rounded-[24px] p-5 
+        shadow-[0_4px_20px_rgba(0,0,0,0.03)] 
+        hover:shadow-[0_8px_30px_rgba(0,0,0,0.08)] 
+        transition-all duration-300 
+        border border-gray-50/80 
+        flex justify-between items-center
+    `;
+
+    // Логика кнопок: если товара нет, показываем "+". Если есть, показываем блок с количеством "+ / -"
+    let controlsHTML = '';
+    if (quantity === 0) {
+        controlsHTML = `
+            <button class="add-btn shrink-0 w-12 h-12 rounded-[16px] bg-gray-50 text-blue-600 flex items-center justify-center text-2xl font-light hover:bg-blue-600 hover:text-white transition-colors">
+                +
+            </button>
+        `;
+    } else {
+        controlsHTML = `
+            <div class="flex items-center gap-3 bg-gray-50 rounded-[16px] p-1 border border-gray-100">
+                <button class="remove-btn w-9 h-9 rounded-[12px] bg-white text-gray-600 shadow-sm flex items-center justify-center text-xl font-medium hover:text-red-500 transition-colors">
+                    -
+                </button>
+                <span class="w-4 text-center font-bold text-gray-800">${quantity}</span>
+                <button class="add-btn w-9 h-9 rounded-[12px] bg-blue-600 text-white shadow-sm flex items-center justify-center text-xl font-medium hover:bg-blue-700 transition-colors">
+                    +
+                </button>
+            </div>
+        `;
+    }
+
+    card.innerHTML = `
+        <div class="flex-1 pr-4">
+            <h3 class="text-[17px] font-bold text-gray-900 leading-tight">
+                ${product.name}
+            </h3>
+            <p class="text-[13px] text-gray-500 mt-1.5 leading-relaxed">
+                ${product.description}
+            </p>
+            <div class="text-blue-600 text-[16px] font-bold mt-3">
+                ${product.price} ₴
+            </div>
+        </div>
+        <div class="shrink-0 flex items-center justify-center min-w-[48px]">
+            ${controlsHTML}
+        </div>
+    `;
+
+    // Вешаем обработчик на плюс
+    const addBtn = card.querySelector(".add-btn");
+    if (addBtn) {
+        addBtn.addEventListener("click", () => {
+            addToCart(product);
+            if (tg && tg.HapticFeedback) tg.HapticFeedback.impactOccurred("light");
+            onUpdate();
+        });
+    }
+
+    // Вешаем обработчик на минус (если он есть)
+    const removeBtn = card.querySelector(".remove-btn");
+    if (removeBtn) {
+        removeBtn.addEventListener("click", () => {
+            removeFromCart(product.id);
+            onUpdate();
+        });
+    }
+
+    return card;
+}
+
 function renderProducts(category) {
     const container = document.getElementById("products-list");
     if (!container) return;
@@ -126,80 +204,112 @@ function renderProducts(category) {
     const products = typeof servicesData !== 'undefined' ? (servicesData[category] || []) : [];
 
     products.forEach(product => {
-        // Проверяем, есть ли уже этот товар в корзине и берем его количество
-        const cartItem = state.cart.find(item => item.id === product.id);
-        const quantity = cartItem ? cartItem.quantity : 0;
+        container.appendChild(createServiceCard(product, () => renderProducts(category)));
+    });
+}
+
+// ======================================
+// Пошук по всіх категоріях
+// ======================================
+function getAllServices() {
+    if (typeof servicesData === 'undefined') return [];
+    return Object.keys(servicesData).reduce((acc, key) => acc.concat(servicesData[key]), []);
+}
+
+function renderSearchResults(query) {
+    const container = document.getElementById("products-list");
+    const emptyState = document.getElementById("search-empty-state");
+    const catalogTitle = document.getElementById("catalog-title");
+    const popularSection = document.getElementById("popular-section");
+    const categoriesSection = document.getElementById("categories-section");
+    if (!container) return;
+
+    const q = query.trim().toLowerCase();
+
+    // Пустий пошук — повертаємось до звичайного вигляду каталогу
+    if (!q) {
+        if (popularSection) popularSection.classList.remove("hidden");
+        if (categoriesSection) categoriesSection.classList.remove("hidden");
+        if (catalogTitle) catalogTitle.textContent = "Послуги";
+        if (emptyState) emptyState.classList.add("hidden");
+        renderProducts(state.currentCategory);
+        return;
+    }
+
+    if (popularSection) popularSection.classList.add("hidden");
+    if (categoriesSection) categoriesSection.classList.add("hidden");
+    if (catalogTitle) catalogTitle.textContent = `Результати пошуку: "${query}"`;
+
+    const results = getAllServices().filter(p => p.name.toLowerCase().includes(q));
+
+    container.innerHTML = "";
+
+    if (results.length === 0) {
+        if (emptyState) emptyState.classList.remove("hidden");
+        return;
+    }
+    if (emptyState) emptyState.classList.add("hidden");
+
+    results.forEach(product => {
+        container.appendChild(createServiceCard(product, () => renderSearchResults(query)));
+    });
+}
+
+const searchInput = document.getElementById("search-input");
+if (searchInput) {
+    searchInput.addEventListener("input", (e) => {
+        state.search = e.target.value;
+        renderSearchResults(state.search);
+    });
+}
+
+// ======================================
+// Популярні послуги (кураторський вибір)
+// ======================================
+const POPULAR_IDS = [104, 201, 301, 3, 502, 7];
+
+function renderPopularServices() {
+    const container = document.getElementById("popular-services");
+    if (!container) return;
+
+    container.innerHTML = "";
+    const allServices = getAllServices();
+
+    POPULAR_IDS.forEach(id => {
+        const product = allServices.find(p => p.id === id);
+        if (!product) return;
 
         const card = document.createElement("div");
         card.className = `
-            bg-white rounded-[24px] p-5 
-            shadow-[0_4px_20px_rgba(0,0,0,0.03)] 
-            hover:shadow-[0_8px_30px_rgba(0,0,0,0.08)] 
-            transition-all duration-300 
-            border border-gray-50/80 
-            flex justify-between items-center
+            shrink-0 w-40 bg-white rounded-[20px] p-4
+            shadow-[0_4px_20px_rgba(0,0,0,0.05)]
+            border border-gray-50/80
         `;
-
-        // Логика кнопок: если товара нет, показываем "+". Если есть, показываем блок с количеством "+ / -"
-        let controlsHTML = '';
-        if (quantity === 0) {
-            controlsHTML = `
-                <button class="add-btn shrink-0 w-12 h-12 rounded-[16px] bg-gray-50 text-blue-600 flex items-center justify-center text-2xl font-light hover:bg-blue-600 hover:text-white transition-colors">
-                    +
-                </button>
-            `;
-        } else {
-            controlsHTML = `
-                <div class="flex items-center gap-3 bg-gray-50 rounded-[16px] p-1 border border-gray-100">
-                    <button class="remove-btn w-9 h-9 rounded-[12px] bg-white text-gray-600 shadow-sm flex items-center justify-center text-xl font-medium hover:text-red-500 transition-colors">
-                        -
-                    </button>
-                    <span class="w-4 text-center font-bold text-gray-800">${quantity}</span>
-                    <button class="add-btn w-9 h-9 rounded-[12px] bg-blue-600 text-white shadow-sm flex items-center justify-center text-xl font-medium hover:bg-blue-700 transition-colors">
-                        +
-                    </button>
-                </div>
-            `;
-        }
-
         card.innerHTML = `
-            <div class="flex-1 pr-4">
-                <h3 class="text-[17px] font-bold text-gray-900 leading-tight">
-                    ${product.name}
-                </h3>
-                <p class="text-[13px] text-gray-500 mt-1.5 leading-relaxed">
-                    ${product.description}
-                </p>
-                <div class="text-blue-600 text-[16px] font-bold mt-3">
-                    ${product.price} ₴
-                </div>
-            </div>
-            <div class="shrink-0 flex items-center justify-center min-w-[48px]">
-                ${controlsHTML}
-            </div>
+            <div class="text-[15px] font-bold text-gray-900 leading-tight min-h-[40px]">${product.name}</div>
+            <div class="text-blue-600 text-[15px] font-bold mt-2">${product.price} ₴</div>
+            <button class="popular-add-btn mt-3 w-full py-2 rounded-[12px] bg-blue-50 text-blue-600 font-semibold text-sm hover:bg-blue-600 hover:text-white transition-colors">
+                + Додати
+            </button>
         `;
 
-        // Вешаем обработчик на плюс
-        const addBtn = card.querySelector(".add-btn");
-        if (addBtn) {
-            addBtn.addEventListener("click", () => {
-                addToCart(product);
-                renderProducts(category); // Обновляем карточку товара, чтобы перерисовалась цифра
-            });
-        }
-
-        // Вешаем обработчик на минус (если он есть)
-        const removeBtn = card.querySelector(".remove-btn");
-        if (removeBtn) {
-            removeBtn.addEventListener("click", () => {
-                removeFromCart(product.id);
-                renderProducts(category); // Обновляем карточку товара, чтобы перерисовалась цифра
-            });
-        }
+        const btn = card.querySelector(".popular-add-btn");
+        btn.addEventListener("click", () => {
+            addToCart(product);
+            if (tg && tg.HapticFeedback) tg.HapticFeedback.impactOccurred("light");
+            // Якщо зараз відкрита та ж категорія — перемальовуємо, щоб з'явився +/-
+            if (state.currentCategory === product.category) {
+                renderProducts(state.currentCategory);
+            }
+        });
 
         container.appendChild(card);
     });
 }
+
+// Початковий рендер каталогу та популярного при відкритті додатку
+renderProducts(state.currentCategory);
+renderPopularServices();
 
 // ======================================
 // Рендер Услуг Ателье
@@ -694,6 +804,9 @@ async function fetchCabinetData() {
             if (nameEl) nameEl.textContent = data.client.name || "Клієнт";
         }
 
+        // 1.5. Обновляем счётчики на главной ("Замовлень" / "Витрачено")
+        updateHomeStats(data.client, data.orders);
+
         // 2. Заполняем список заказов
         const ordersContainer = document.getElementById("orders-list");
 
@@ -747,6 +860,26 @@ function getStatusColor(status) {
         return "bg-green-100 text-green-600";
     }
     return "bg-gray-100 text-gray-600";
+}
+
+// Оновлення статистики на головній сторінці ("Замовлень" / "Витрачено")
+function updateHomeStats(client, orders) {
+    const ordersCountEl = document.getElementById("orders-count");
+    const bonusCountEl = document.getElementById("bonus-count");
+    const list = orders || [];
+
+    if (ordersCountEl) {
+        ordersCountEl.textContent = list.length;
+    }
+
+    if (bonusCountEl) {
+        // Рахуємо реальну суму витрат по замовленнях (ательє без ціни до огляду — пропускаємо)
+        const totalSpent = list.reduce((sum, order) => {
+            const match = String(order.price || "").match(/\d+/);
+            return sum + (match ? parseInt(match[0], 10) : 0);
+        }, 0);
+        bonusCountEl.textContent = `${totalSpent} ₴`;
+    }
 }
 
 // Автоматический запуск при старте
@@ -936,6 +1069,9 @@ async function loadCabinetData() {
 
         // --- Отрисовка заказов ---
         renderOrdersList(orders);
+
+        // --- Оновлюємо статистику на головній, якщо вона зміниться ---
+        updateHomeStats(client, orders);
 
     } catch (error) {
         console.error("Ошибка кабинета:", error);
