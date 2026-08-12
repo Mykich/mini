@@ -631,7 +631,12 @@ function renderCheckout() {
     const container = document.getElementById("checkout-items");
     const totalPriceEl = document.getElementById("checkout-total-price");
     const addressInput = document.getElementById("checkout-address");
-
+    if (addressInput && !addressInput.value) {
+        const savedAddress = localStorage.getItem('userAddress'); // Или ключ, который ты используешь для сохранения
+        if (savedAddress) {
+            addressInput.value = savedAddress;
+        }
+    }
     if (!container) return;
     container.innerHTML = "";
 
@@ -899,8 +904,13 @@ async function fetchCabinetData() {
 
         // 1. Заполняем имя пользователя в кабинете
         if (data.client) {
-            const nameEl = document.getElementById("profile-name");
-            if (nameEl) nameEl.textContent = data.client.name || "Клієнт";
+        const nameEl = document.getElementById("profile-name");
+        if (nameEl) nameEl.textContent = data.client.name || "Клієнт";
+    
+        // СРАЗУ при старте приложения подтягиваем адрес в поле чекаута
+        const checkoutAddressInput = document.getElementById("checkout-address");
+        if (checkoutAddressInput && data.client.apartment) {
+        checkoutAddressInput.value = data.client.apartment;
         }
 
         // 1.5. Обновляем счётчики на главной ("Замовлень" / "Витрачено")
