@@ -1295,7 +1295,7 @@ if (toggleEditBtn && editForm) {
     });
 }
 
-// 4. Сохранение профиля
+// Исправленный вариант:
 const saveProfileBtn = document.getElementById("save-profile-btn");
 if (saveProfileBtn) {
     saveProfileBtn.addEventListener("click", async () => {
@@ -1319,9 +1319,10 @@ if (saveProfileBtn) {
                     'ngrok-skip-browser-warning': '69420'
                 },
                 body: JSON.stringify({
-                message: String(text || ""),
-                telegram_id: userId ? String(userId) : null
-            
+                    telegram_id: userId,
+                    first_name: name, // или name, в зависимости от того, что ждет сервер api.py
+                    phone: phone,
+                    apartment: apt
                 })
             });
 
@@ -1329,7 +1330,7 @@ if (saveProfileBtn) {
                 if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
                 Telegram.WebApp.showAlert("Профіль успішно оновлено!");
                 editForm.classList.add("hidden");
-                loadCabinetData(); // Перерисовываем
+                loadCabinetData(); 
             } else {
                 Telegram.WebApp.showAlert("Помилка збереження.");
             }
