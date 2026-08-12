@@ -286,23 +286,35 @@ function renderSearchResults(query) {
 }
 
 const searchInput = document.getElementById("search-input");
+
 if (searchInput) {
-    searchInput.addEventListener("input", (e) => {
-        state.search = e.target.value;
-        renderSearchResults(state.search);
+    // 1. Поднимаем поле поиска над клавиатурой при клике (как на image_2.png)
+    searchInput.addEventListener("focus", () => {
+        setTimeout(() => {
+            // Выравниваем элемент по центру видимой области, 
+            // чтобы он гарантированно оказался над клавиатурой
+            searchInput.scrollIntoView({ behavior: "smooth", block: "center" });
+        }, 400); // Таймаут 400мс дает Telegram время полностью вытянуть клавиатуру
     });
 
-    // Плавная прокрутка при фокусе (нажатии на поле)
-    searchInput.addEventListener("focus", () => {
-        // Используем таймаут, чтобы дать мобильной клавиатуре 
-        // долю секунды на выезд перед началом скролла
-        setTimeout(() => {
-            // Скроллим так, чтобы родительская секция оказалась в верхней части экрана
-            searchInput.closest('section').scrollIntoView({ 
-                behavior: "smooth", 
-                block: "start" 
-            });
-        }, 300);
+    // 2. Обработка нажатия Enter на клавиатуре
+    searchInput.addEventListener("keydown", (e) => {
+        // Проверяем, что нажат именно Enter
+        if (e.key === "Enter" || e.keyCode === 13) {
+            e.preventDefault(); // Блокируем стандартную перезагрузку страницы
+            searchInput.blur(); // Снимаем фокус с поля, чтобы скрыть клавиатуру телефона
+
+            // Ищем контейнер, в котором рендерятся результаты.
+            // ВАЖНО: Замени "search-results" на тот ID, который используется в твоем HTML
+            const resultsContainer = document.getElementById("search-results"); 
+            
+            if (resultsContainer) {
+                setTimeout(() => {
+                    // Скроллим страницу к блоку с результатами
+                    resultsContainer.scrollIntoView({ behavior: "smooth", block: "start" });
+                }, 300); // Небольшая задержка, чтобы клавиатура успела скрыться
+            }
+        }
     });
 }
 
