@@ -205,14 +205,16 @@ async def ai_chat(data: AIMessageData):
         return {"status": "success", "reply": "Зараз я трохи перевантажений замовленнями 🧺. Будь ласка, зателефонуйте нашому менеджеру!"}
     
 # --- 1. GET: Загрузка кабинета ---
-def get_loyalty_discount(order_count: int) -> int:
+def get_loyalty_discount(total_spent: float) -> int:
     """
-    Знижка постійного клієнта Pralnya Club за кількістю попередніх замовлень.
-    Максимум — 10%. Пороги легко змінити тут, в одному місці.
+    Знижка постійного клієнта Pralnya Club за сумою витрачених коштів
+    (навмисно НЕ за кількістю замовлень — інакше знижку можна "накрутити",
+    замовляючи по одній футболці багато разів).
+    Максимум — 10%. Пороги (в ₴) легко змінити тут, в одному місці.
     """
-    if order_count >= 6:
+    if total_spent >= 5000:
         return 10
-    if order_count >= 3:
+    if total_spent >= 2000:
         return 5
     return 0
 
@@ -237,6 +239,7 @@ async def get_cabinet(user_id: int):
                 break
         
         client_orders = []
+        total_spent = 0.0
         
         # 2. Собираем заказы ПРАЧЕЧНОЙ (через кэш)
         all_orders = get_cached_records(sheet_orders, "orders")
@@ -245,6 +248,7 @@ async def get_cabinet(user_id: int):
             order_phone = str(row.get("Телефон", ""))
             
             if order_tg_id == user_str_id or (client_data["phone"] and order_phone == client_data["phone"]):
+                total_spent += parse_price_value(row.get("Сума", ""))
                 client_orders.append({
                     "id": str(row.get("Номер замовлення", "")),
                     "status": row.get("Статус", "Прийнято"),
@@ -255,6 +259,8 @@ async def get_cabinet(user_id: int):
                 })
                 
         # 3. Собираем заявки АТЕЛЬЕ (через кэш)
+        # Примітка: суму ательє свідомо НЕ додаємо до total_spent — вона орієнтовна
+        # до огляду майстром, тому клієнту показуємо "Після огляду", а не число.
         all_atelier = get_cached_records(sheet_atelier, "atelier")
         for row in all_atelier:
             order_tg_id = str(row.get("Telegram ID", ""))
@@ -269,8 +275,8 @@ async def get_cabinet(user_id: int):
                     "type": "atelier"
                 })
         
-        # 4. Знижка Pralnya Club — рахуємо від реальної кількості замовлень (пральня + ательє)
-        client_data["discount"] = get_loyalty_discount(len(client_orders))
+        # 4. Знижка Pralnya Club — рахуємо від реальної суми витрат (пральня, без ательє)
+        client_data["discount"] = get_loyalty_discount(total_spent)
 
         return {"client": client_data, "orders": client_orders}
         
@@ -438,13 +444,14 @@ async def create_order(order: OrderData):
             else:
                 items_str = str(order.items or "Послуги пральні")
 
-            # 1.5 Знижка Pralnya Club — за кількістю попередніх замовлень цього клієнта
+            # 1.5 Знижка Pralnya Club — за сумою, яку клієнт вже витратив раніше
             all_orders_for_loyalty = get_cached_records(sheet_orders, "orders_loyalty", ttl=LOYALTY_CACHE_TTL)
-            prev_orders_count = sum(
-                1 for row in all_orders_for_loyalty
+            prev_total_spent = sum(
+                parse_price_value(row.get("Сума", ""))
+                for row in all_orders_for_loyalty
                 if str(row.get("telegram_id", "")) == str(order.telegram_id)
             )
-            loyalty_discount = get_loyalty_discount(prev_orders_count)
+            loyalty_discount = get_loyalty_discount(prev_total_spent)
             price_before_discount = total_price
             if loyalty_discount > 0:
                 total_price = round(total_price * (1 - loyalty_discount / 100))
@@ -577,6 +584,26 @@ async def create_b2b_request(data: B2BData):
     except Exception as e:
         print(f"❌ Помилка створення B2B заявки: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+def parse_price_value(val) -> float:
+    """
+    Повертає число з суми в будь-якому форматі, в якому вона записана в таблиці
+    (200, '200 грн', '200,00', копійки тощо). Некоректне/порожнє значення -> 0.
+    Використовується для підрахунку витрат клієнта (Pralnya Club).
+    """
+    if not val:
+        return 0.0
+    clean_str = str(val).replace('\xa0', '').replace(' ', '').strip()
+    clean_str = clean_str.replace(',', '.')
+    clean_str = clean_str.replace('грн', '').replace('₴', '').strip()
+    try:
+        num = float(clean_str)
+        if num >= 10000 and num % 100 == 0:
+            num = num / 100
+        return num
+    except ValueError:
+        return 0.0
+
 
 def format_price(val):
     if not val:

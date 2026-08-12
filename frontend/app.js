@@ -862,10 +862,21 @@ function getStatusColor(status) {
     return "bg-gray-100 text-gray-600";
 }
 
+// Рахує реальну суму витрат по замовленнях (ательє без ціни до огляду — пропускаємо,
+// так само як на бекенді в /api/cabinet). Використовується і для "Витрачено",
+// і для прогресу в картці Pralnya Club.
+function computeTotalSpent(orders) {
+    return (orders || []).reduce((sum, order) => {
+        const match = String(order.price || "").match(/\d+/);
+        return sum + (match ? parseInt(match[0], 10) : 0);
+    }, 0);
+}
+
 // Pralnya Club — бейдж знижки + текст прогресу до наступного рівня.
 // Пороги дублюють get_loyalty_discount() на сервері (api.py) — лише для відображення,
-// реальна знижка завжди рахується і застосовується на бекенді.
-function updateLoyaltyCard(orderCount, discount) {
+// реальна знижка завжди рахується і застосовується на бекенді від суми витрат
+// (навмисно не від кількості замовлень — інакше знижку можна "накрутити" дрібними замовленнями).
+function updateLoyaltyCard(totalSpent, discount) {
     const badge = document.getElementById("profile-discount-badge");
     const text = document.getElementById("pralnya-club-text");
 
@@ -875,9 +886,9 @@ function updateLoyaltyCard(orderCount, discount) {
         if (discount >= 10) {
             text.textContent = "Максимальна знижка 10% активна — дякуємо, що обираєте нас! 💙";
         } else {
-            const nextThreshold = discount === 0 ? 3 : 6;
-            const remaining = Math.max(1, nextThreshold - orderCount);
-            text.textContent = `Ще ${remaining} замовлень до наступного рівня знижки`;
+            const nextThreshold = discount === 0 ? 2000 : 5000;
+            const remaining = Math.max(1, nextThreshold - totalSpent);
+            text.textContent = `Витратьте ще ${remaining} ₴ до наступного рівня знижки`;
         }
     }
 }
@@ -893,12 +904,7 @@ function updateHomeStats(client, orders) {
     }
 
     if (bonusCountEl) {
-        // Рахуємо реальну суму витрат по замовленнях (ательє без ціни до огляду — пропускаємо)
-        const totalSpent = list.reduce((sum, order) => {
-            const match = String(order.price || "").match(/\d+/);
-            return sum + (match ? parseInt(match[0], 10) : 0);
-        }, 0);
-        bonusCountEl.textContent = `${totalSpent} ₴`;
+        bonusCountEl.textContent = `${computeTotalSpent(list)} ₴`;
     }
 }
 
@@ -1083,7 +1089,7 @@ async function loadCabinetData() {
             checkoutAddressInput.value = client.apartment;
         }
         // Pralnya Club — знижка та прогрес до наступного рівня
-        updateLoyaltyCard(orders.length, client.discount || 0);
+        updateLoyaltyCard(computeTotalSpent(orders), client.discount || 0);
 
         // --- Отрисовка заказов ---
         renderOrdersList(orders);
