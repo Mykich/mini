@@ -288,6 +288,12 @@ function renderSearchResults(query) {
 const searchInput = document.getElementById("search-input");
 
 if (searchInput) {
+    // 0. Головне: запускаємо пошук при кожному натисканні клавіші
+    searchInput.addEventListener("input", (e) => {
+        state.search = e.target.value;
+        renderSearchResults(state.search);
+    });
+
     // 1. Поднимаем поле поиска над клавиатурой при клике (как на image_2.png)
     searchInput.addEventListener("focus", () => {
         setTimeout(() => {
@@ -304,9 +310,8 @@ if (searchInput) {
             e.preventDefault(); // Блокируем стандартную перезагрузку страницы
             searchInput.blur(); // Снимаем фокус с поля, чтобы скрыть клавиатуру телефона
 
-            // Ищем контейнер, в котором рендерятся результаты.
-            // ВАЖНО: Замени "search-results" на тот ID, который используется в твоем HTML
-            const resultsContainer = document.getElementById("search-results"); 
+            // Результаты поиска рендерятся именно в #products-list
+            const resultsContainer = document.getElementById("products-list"); 
             
             if (resultsContainer) {
                 setTimeout(() => {
