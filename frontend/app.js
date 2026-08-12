@@ -92,15 +92,15 @@ function showPage(pageId) {
 window.switchTab = function(tabName) {
     // 1. Сбрасываем цвета у всех кнопок меню (делаем серыми)
     document.querySelectorAll('.nav-btn').forEach(btn => {
-        btn.classList.remove('text-blue-500');
-        btn.classList.add('text-slate-400');
+        btn.classList.remove('text-blue-600');
+        btn.classList.add('text-gray-400');
     });
 
     // 2. Красим активную кнопку (делаем синей)
     const activeBtn = document.querySelector(`.nav-btn[onclick="switchTab('${tabName}')"]`);
     if (activeBtn) {
-        activeBtn.classList.remove('text-slate-400');
-        activeBtn.classList.add('text-blue-500');
+        activeBtn.classList.remove('text-gray-400');
+        activeBtn.classList.add('text-blue-600');
     }
 
     // 3. Мапим названия из меню на твои ID страниц и вызываем роутинг
@@ -1282,33 +1282,33 @@ if (refreshBtn) {
     });
 }
 
-window.openAIPage = function() {
+//window.openAIPage = function() {
     // 1. Скрываем все возможные страницы (main и section), которые есть в твоем index_2.html
-    const allPages = [
-        'home-page', 
-        'order-page', 
-        'orders-page', 
-        'atelier-page', 
-        'b2b-page', 
-        'checkout-page', 
-        'cabinet-page'
-    ];
+    //const allPages = [
+        //'home-page', 
+        //'order-page', 
+        //'orders-page', 
+        //'atelier-page', 
+        //'b2b-page', 
+        //'checkout-page', 
+        //'cabinet-page'
+    //];
     
-    allPages.forEach(pageId => {
-        const pageElement = document.getElementById(pageId);
-        if (pageElement) {
-            pageElement.classList.add('hidden');
-        }
-    });
+    //allPages.forEach(pageId => {
+        //const pageElement = document.getElementById(pageId);
+        //if (pageElement) {
+            //pageElement.classList.add('hidden');
+        //}
+    //});
     
     // 2. Принудительно показываем секцию AI
-    const aiPage = document.getElementById('ai-page');
-    if (aiPage) {
-        aiPage.classList.remove('hidden');
-    }
+    //const aiPage = document.getElementById('ai-page');
+    //f (aiPage) {
+        //aiPage.classList.remove('hidden');
+    //}
     
     // 3. Снимаем активный класс с кнопок нижнего меню (чтобы было видно, что мы не на главной)
-    document.querySelectorAll('.nav-btn').forEach(btn => {
-        btn.classList.remove('active');
-    });
-};
+    //document.querySelectorAll('.nav-btn').forEach(btn => {
+       // btn.classList.remove('active');
+    //});
+//};
