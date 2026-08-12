@@ -801,12 +801,11 @@ shadow-xl">
         Підтвердити замовлення
     </button>
 </main>
- <!-- Нижняя панель навигации (Светлая и высокая) -->
-<nav class="fixed bottom-0 left-0 w-full bg-white/95 backdrop-blur-md border-t border-gray-100 z-50 pb-safe shadow-[0_-4px_20px_rgba(0,0,0,0.02)]">
+ <!-- Нижняя панель навигации (Премиальная прозрачность / Glassmorphism) -->
+<nav class="fixed bottom-0 left-0 w-full bg-white/60 backdrop-blur-xl border-t border-gray-200/50 z-50 pb-safe shadow-[0_-8px_30px_rgba(0,0,0,0.04)]">
   <div class="flex justify-around items-center h-[76px] px-2 pb-1">
     
     <!-- Вкладка: Головна -->
-    <!-- Для светлой темы активный цвет text-blue-600 -->
     <button class="nav-btn group flex flex-col items-center justify-center w-full h-full text-blue-600 transition-colors duration-300" onclick="switchTab('main')">
       <svg class="w-7 h-7 mb-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.592 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25"></path>
@@ -815,7 +814,6 @@ shadow-xl">
     </button>
 
     <!-- Вкладка: Асистент -->
-    <!-- Неактивный цвет text-gray-400 -->
     <button class="nav-btn group flex flex-col items-center justify-center w-full h-full text-gray-400 hover:text-blue-600 transition-colors duration-300" onclick="switchTab('assistant')">
       <svg class="w-7 h-7 mb-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456zM16.894 20.567L16.5 21.75l-.394-1.183a2.25 2.25 0 00-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 001.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 001.423 1.423l1.183.394-1.183.394a2.25 2.25 0 00-1.423 1.423z"></path>
