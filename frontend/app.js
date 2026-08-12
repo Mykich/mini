@@ -303,16 +303,7 @@ if (searchInput) {
         renderSearchResults(state.search);
     });
 
-    // 1. Поднимаем поле поиска над клавиатурой при клике (как на image_2.png)
-    searchInput.addEventListener("focus", () => {
-        setTimeout(() => {
-            // Выравниваем элемент по центру видимой области, 
-            // чтобы он гарантированно оказался над клавиатурой
-            searchInput.scrollIntoView({ behavior: "smooth", block: "center" });
-        }, 400); // Таймаут 400мс дает Telegram время полностью вытянуть клавиатуру
-    });
-
-    // 2. Обработка нажатия Enter на клавиатуре
+    // 1. Обработка нажатия Enter на клавиатуре
     searchInput.addEventListener("keydown", (e) => {
         // Проверяем, что нажат именно Enter
         if (e.key === "Enter" || e.keyCode === 13) {
@@ -1405,4 +1396,18 @@ document.addEventListener("click", (e) => {
     if (e.target === active || active.contains(e.target)) return;
 
     active.blur();
+});
+
+// ======================================
+// Підняти поле вводу над клавіатурою при фокусі — для БУДЬ-ЯКОГО
+// input/textarea в застосунку (адреса, коментар, B2B-форма, профіль тощо),
+// а не тільки для пошуку.
+// ======================================
+document.addEventListener("focusin", (e) => {
+    const el = e.target;
+    if (el.tagName !== "INPUT" && el.tagName !== "TEXTAREA") return;
+
+    setTimeout(() => {
+        el.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 400); // Даємо Telegram час повністю розкрити клавіатуру
 });
