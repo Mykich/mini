@@ -63,6 +63,15 @@ function showPage(pageId) {
         renderAtelierServices();
     }
 
+    // Якщо повернулись на каталог — перемальовуємо, щоб +/- відповідали актуальному кошику
+    if (pageId === "order") {
+        if (state.search) {
+            renderSearchResults(state.search);
+        } else {
+            renderProducts(state.currentCategory);
+        }
+    }
+
     // Запускаем загрузку данных кабинета
     if (pageId === "orders" || pageId === "profile" || pageId === "cabinet") {
         loadCabinetData();
@@ -664,8 +673,20 @@ function renderCheckout() {
                     <span class="text-blue-600 font-bold ml-1">x${item.count}</span>
                 </div>
             </div>
-            <div class="text-[15px] font-bold text-gray-900">${itemTotal} ₴</div>
+            <div class="flex items-center gap-3">
+                <div class="text-[15px] font-bold text-gray-900">${itemTotal} ₴</div>
+                <button class="checkout-remove-btn w-7 h-7 rounded-full bg-gray-50 text-gray-400 hover:text-red-500 hover:bg-red-50 flex items-center justify-center text-lg leading-none transition-colors" title="Прибрати одну позицію">
+                    −
+                </button>
+            </div>
         `;
+
+        const removeBtn = row.querySelector(".checkout-remove-btn");
+        removeBtn.addEventListener("click", () => {
+            removeFromCart(item.id);
+            renderCheckout();
+        });
+
         container.appendChild(row);
     });
 
@@ -674,6 +695,33 @@ function renderCheckout() {
     if (displayAddress && addressInput && displayAddress.textContent !== "ЖК, номер квартири") {
         addressInput.value = displayAddress.textContent;
     }
+}
+
+// Повне очищення кошика — з підтвердженням, щоб не зняти все випадково
+function clearCart() {
+    if (state.cart.length === 0) return;
+
+    const doClear = () => {
+        state.cart = [];
+        updateCartUI();
+        renderCheckout();
+        // Якщо каталог зараз відкритий десь позаду — оновимо, щоб +/- скинулись на "+"
+        renderProducts(state.currentCategory);
+        if (tg && tg.HapticFeedback) tg.HapticFeedback.notificationOccurred("success");
+    };
+
+    if (typeof tg !== 'undefined' && tg.showConfirm) {
+        tg.showConfirm("Очистити весь кошик?", (confirmed) => {
+            if (confirmed) doClear();
+        });
+    } else if (confirm("Очистити весь кошик?")) {
+        doClear();
+    }
+}
+
+const clearCartBtn = document.getElementById("clear-cart-btn");
+if (clearCartBtn) {
+    clearCartBtn.addEventListener("click", clearCart);
 }
 
 // ======================================
@@ -1342,3 +1390,19 @@ if (refreshBtn) {
        // btn.classList.remove('active');
     //});
 //};
+
+// ======================================
+// Закриття клавіатури тапом по порожньому місцю екрану
+// ======================================
+document.addEventListener("click", (e) => {
+    const active = document.activeElement;
+    if (!active) return;
+
+    const isTextField = active.tagName === "INPUT" || active.tagName === "TEXTAREA";
+    if (!isTextField) return;
+
+    // Клік по самому полю (або по чомусь всередині нього) — не чіпаємо фокус
+    if (e.target === active || active.contains(e.target)) return;
+
+    active.blur();
+});
