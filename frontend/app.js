@@ -30,13 +30,14 @@ if (user) {
 }
 
 // 4. Навигация по страницам (Routing)
+// 4. Навигация по страницам (Routing)
 const pages = {
     home: document.getElementById("home-page"),
     order: document.getElementById("order-page"),
     orders: document.getElementById("orders-page"),
     ai: document.getElementById("ai-page"),
-    // ИСПРАВЛЕНО: привязываем к cabinet-page вместо profile-page
     profile: document.getElementById("cabinet-page"), 
+    cabinet: document.getElementById("cabinet-page"), // Добавили алиас для кабинета
     atelier: document.getElementById("atelier-page"),
     b2b: document.getElementById("b2b-page"),
     checkout: document.getElementById("checkout-page")
@@ -84,6 +85,35 @@ function showPage(pageId) {
 
     state.currentPage = pageId;
 }
+
+// ======================================
+// Новая навигация нижнего меню (SVG иконки)
+// ======================================
+window.switchTab = function(tabName) {
+    // 1. Сбрасываем цвета у всех кнопок меню (делаем серыми)
+    document.querySelectorAll('.nav-btn').forEach(btn => {
+        btn.classList.remove('text-blue-500');
+        btn.classList.add('text-slate-400');
+    });
+
+    // 2. Красим активную кнопку (делаем синей)
+    const activeBtn = document.querySelector(`.nav-btn[onclick="switchTab('${tabName}')"]`);
+    if (activeBtn) {
+        activeBtn.classList.remove('text-slate-400');
+        activeBtn.classList.add('text-blue-500');
+    }
+
+    // 3. Мапим названия из меню на твои ID страниц и вызываем роутинг
+    let pageId = 'home';
+    if (tabName === 'main') pageId = 'home';
+    if (tabName === 'assistant') pageId = 'ai';
+    if (tabName === 'cabinet') pageId = 'cabinet';
+
+    showPage(pageId);
+
+    // 4. Добавляем вибрацию при переключении
+    if (tg && tg.HapticFeedback) tg.HapticFeedback.impactOccurred("light");
+};
 
 // Обработчики для кнопок навигации и быстрых действий
 document.querySelectorAll(".nav-btn, .quick-action").forEach(button => {
