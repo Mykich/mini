@@ -205,6 +205,18 @@ async def ai_chat(data: AIMessageData):
         return {"status": "success", "reply": "Зараз я трохи перевантажений замовленнями 🧺. Будь ласка, зателефонуйте нашому менеджеру!"}
     
 # --- 1. GET: Загрузка кабинета ---
+def get_loyalty_discount(order_count: int) -> int:
+    """
+    Знижка постійного клієнта Pralnya Club за кількістю попередніх замовлень.
+    Максимум — 10%. Пороги легко змінити тут, в одному місці.
+    """
+    if order_count >= 6:
+        return 10
+    if order_count >= 3:
+        return 5
+    return 0
+
+
 @app.get("/api/cabinet")
 @retry_google_api(max_retries=3)
 async def get_cabinet(user_id: int):
@@ -257,6 +269,9 @@ async def get_cabinet(user_id: int):
                     "type": "atelier"
                 })
         
+        # 4. Знижка Pralnya Club — рахуємо від реальної кількості замовлень (пральня + ательє)
+        client_data["discount"] = get_loyalty_discount(len(client_orders))
+
         return {"client": client_data, "orders": client_orders}
         
     except Exception as e:
@@ -423,6 +438,17 @@ async def create_order(order: OrderData):
             else:
                 items_str = str(order.items or "Послуги пральні")
 
+            # 1.5 Знижка Pralnya Club — за кількістю попередніх замовлень цього клієнта
+            all_orders_for_loyalty = get_cached_records(sheet_orders, "orders_loyalty", ttl=LOYALTY_CACHE_TTL)
+            prev_orders_count = sum(
+                1 for row in all_orders_for_loyalty
+                if str(row.get("telegram_id", "")) == str(order.telegram_id)
+            )
+            loyalty_discount = get_loyalty_discount(prev_orders_count)
+            price_before_discount = total_price
+            if loyalty_discount > 0:
+                total_price = round(total_price * (1 - loyalty_discount / 100))
+
             # 2. Генерируем ID для прачечной
             order_id = f"ORD-{int(now.timestamp())}"
             
@@ -447,15 +473,18 @@ async def create_order(order: OrderData):
             ]
             
             sheet_orders.append_row(new_row)
-            print(f"✅ Заказ {order_id} ({items_str}) успішно записано!")
+            print(f"✅ Заказ {order_id} ({items_str}) успішно записано! Знижка: {loyalty_discount}%")
             
             # === НОВИЙ БЛОК: УВЕДОМЛЕНИЯ В TELEGRAM (ПРАЧЕЧНАЯ) ===
             
+            discount_line = f"<b>Знижка Pralnya Club:</b> -{loyalty_discount}% (було {int(price_before_discount)} ₴)\n" if loyalty_discount > 0 else ""
+
             # 1. Сообщение для клиента
             client_text = (
                 f"🫧 <b>Ваше замовлення прийнято!</b>\n\n"
                 f"<b>Номер:</b> {order_id}\n"
                 f"<b>Речі:</b> {items_str}\n"
+                f"{discount_line}"
                 f"<b>Сума:</b> {int(total_price)} ₴\n\n"
                 f"Дякуємо, що обрали PralnyaVdoma! 💙"
             )
@@ -469,6 +498,7 @@ async def create_order(order: OrderData):
                 f"<b>Телефон:</b> {order.phone}\n"
                 f"<b>Квартира:</b> {order.address}\n"
                 f"<b>Речі:</b> {items_str}\n"
+                f"{discount_line}"
                 f"<b>Сума:</b> {int(total_price)} ₴\n"
                 f"<b>Коментар:</b> {order.comment or 'Немає'}"
             )
@@ -483,21 +513,24 @@ async def create_order(order: OrderData):
         print(traceback.format_exc())
         raise HTTPException(status_code=500, detail=str(e))
 
-# Кэш в памяти для Google Таблиц (время жизни — 60 секунд)
+# Кэш в памяти для Google Таблиц (время жизни — 60 секунд по умолчанию)
 cache_storage = {
     "clients": {"data": None, "expires": 0},
     "orders": {"data": None, "expires": 0},
+    "orders_loyalty": {"data": None, "expires": 0},  # окремий, короткий TTL — від нього залежить сума до сплати
     "atelier": {"data": None, "expires": 0}
 }
-CACHE_TTL = 60 
+CACHE_TTL = 60
+LOYALTY_CACHE_TTL = 5  # секунд — набагато коротший за звичайний, щоб два швидких замовлення поспіль рахували коректно
 
-def get_cached_records(sheet, cache_key):
+def get_cached_records(sheet, cache_key, ttl=None):
     global cache_storage
     now = time.time()
+    effective_ttl = CACHE_TTL if ttl is None else ttl
     # Если кэш пустой или устарел — делаем реальный запрос к Google Таблице
     if cache_storage[cache_key]["data"] is None or now > cache_storage[cache_key]["expires"]:
         cache_storage[cache_key]["data"] = sheet.get_all_records()
-        cache_storage[cache_key]["expires"] = now + CACHE_TTL
+        cache_storage[cache_key]["expires"] = now + effective_ttl
     return cache_storage[cache_key]["data"]
 
     

@@ -862,6 +862,26 @@ function getStatusColor(status) {
     return "bg-gray-100 text-gray-600";
 }
 
+// Pralnya Club — бейдж знижки + текст прогресу до наступного рівня.
+// Пороги дублюють get_loyalty_discount() на сервері (api.py) — лише для відображення,
+// реальна знижка завжди рахується і застосовується на бекенді.
+function updateLoyaltyCard(orderCount, discount) {
+    const badge = document.getElementById("profile-discount-badge");
+    const text = document.getElementById("pralnya-club-text");
+
+    if (badge) badge.textContent = `Знижка ${discount}%`;
+
+    if (text) {
+        if (discount >= 10) {
+            text.textContent = "Максимальна знижка 10% активна — дякуємо, що обираєте нас! 💙";
+        } else {
+            const nextThreshold = discount === 0 ? 3 : 6;
+            const remaining = Math.max(1, nextThreshold - orderCount);
+            text.textContent = `Ще ${remaining} замовлень до наступного рівня знижки`;
+        }
+    }
+}
+
 // Оновлення статистики на головній сторінці ("Замовлень" / "Витрачено")
 function updateHomeStats(client, orders) {
     const ordersCountEl = document.getElementById("orders-count");
@@ -1062,10 +1082,8 @@ async function loadCabinetData() {
         if (checkoutAddressInput && client.apartment) {
             checkoutAddressInput.value = client.apartment;
         }
-        // Скидка
-        if (client.discount > 0) {
-            document.getElementById("profile-discount-badge").textContent = `Знижка ${client.discount}%`;
-        }
+        // Pralnya Club — знижка та прогрес до наступного рівня
+        updateLoyaltyCard(orders.length, client.discount || 0);
 
         // --- Отрисовка заказов ---
         renderOrdersList(orders);
