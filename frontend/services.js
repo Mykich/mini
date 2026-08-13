@@ -33,6 +33,27 @@ const servicesData = {
             description: "Точний підгін по фігурі",
             price: 450,
             category: "atelier"
+        },
+        {
+            id: 605,
+            name: "Вкоротити рукави",
+            description: "Точний підгін по фігурі",
+            price: 350,
+            category: "atelier"
+        },
+        {
+            id: 606,
+            name: "Ремонт кишень",
+            description: "Відновлення цілісності виробу",
+            price: 300,
+            category: "atelier"
+        },
+        {
+            id: 607,
+            name: "Дрібний ремонт одягу",
+            description: "Дрібні виправлення та підгонка",
+            price: 200,
+            category: "atelier"
         }
     ],
 
@@ -116,6 +137,30 @@ const servicesData = {
             price: 450,
             category: "clothing",
             image: "images/services/dress.png"
+        },
+        {
+            id: 11,
+            name: "Шорти",
+            description: "Прання та сушіння",
+            price: 180,
+            category: "clothing",
+            image: "images/services/shorts.png"
+        },
+        {
+            id: 12,
+            name: "Світшот",
+            description: "Прання та сушіння",
+            price: 350,
+            category: "clothing",
+            image: "images/services/sweatshirt.png"
+        },
+        {
+            id: 13,
+            name: "Кофта",
+            description: "Делікатне прання",
+            price: 350,
+            category: "clothing",
+            image: "images/services/cardigan.png"
         }
     ],
 
@@ -159,6 +204,38 @@ const servicesData = {
             price: 1450,
             category: "outerwear",
             image: "images/services/down-long.png"
+        },
+        {
+            id: 106,
+            name: "Куртка джинсова",
+            description: "Професійне очищення",
+            price: 780,
+            category: "outerwear",
+            image: "images/services/denim-jacket.png"
+        },
+        {
+            id: 107,
+            name: "Плащ / Тренч",
+            description: "Делікатна чистка",
+            price: 1000,
+            category: "outerwear",
+            image: "images/services/trench.png"
+        },
+        {
+            id: 108,
+            name: "Жилет",
+            description: "Професійне очищення",
+            price: 750,
+            category: "outerwear",
+            image: "images/services/vest.png"
+        },
+        {
+            id: 109,
+            name: "Піджак",
+            description: "Делікатна чистка",
+            price: 750,
+            category: "outerwear",
+            image: "images/services/blazer.png"
         }
     ],
 
@@ -250,6 +327,30 @@ const servicesData = {
             price: 480,
             category: "textile",
             image: "images/services/curtains-heavy.png"
+        },
+        {
+            id: 212,
+            name: "Рушники",
+            description: "Прання та сушіння",
+            price: 120,
+            category: "textile",
+            image: "images/services/towel.png"
+        },
+        {
+            id: 213,
+            name: "Халат",
+            description: "Прання та сушіння",
+            price: 350,
+            category: "textile",
+            image: "images/services/robe.png"
+        },
+        {
+            id: 214,
+            name: "Наматрацник",
+            description: "Глибоке очищення",
+            price: 800,
+            category: "textile",
+            image: "images/services/mattress-cover.png"
         }
     ],
 
