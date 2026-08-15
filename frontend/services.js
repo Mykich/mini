@@ -412,7 +412,7 @@ const servicesData = {
         {
             id: 501,
             name: "Весільна сукня",
-            description: "Premium аквачистка",
+            description: "Аквачистка та делікатне сушіння",
             price: 3000,
             category: "aquaclean",
             image: "images/services/wedding.png"
