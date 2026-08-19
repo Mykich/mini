@@ -141,7 +141,7 @@ spreadsheet = GS_CLIENT.open(SPREADSHEET_NAME)
 sheet_clients = spreadsheet.worksheet("Clients")
 sheet_orders = spreadsheet.worksheet("Лист1")
 sheet_atelier = spreadsheet.worksheet("Atelier")
-sheet_B2B_General = spreadsheet.worksheet("B2B_General")
+sheet_b2b = spreadsheet.worksheet("B2B2.0")
 
 # --- Модели данных ---
 class ClientProfile(BaseModel):
@@ -547,34 +547,22 @@ async def create_b2b_request(data: B2BData):
     try:
         now = datetime.now()
         date_str = now.strftime("%Y-%m-%d %H:%M")
-        
-        # Генерируем простой номер заявки (например: B2B-26081540 — дата и время)
-        order_number = f"B2B-{now.strftime('%d%m%H%M')}"
 
-        # Формируем строку из 12 элементов строго под новую единую структуру
         new_row = [
-            date_str,                           # 1. Дата
-            "Mini App",                         # 2. Джерело
-            order_number,                       # 3. Номер заявки
-            data.company,                       # 4. Клієнт (Ім'я / Компанія)
-            data.phone,                         # 5. Телефон
-            data.details or "",                 # 6. Опис / Деталі
-            "",                                 # 7. Фото (в B2B форме Mini App его нет)
-            str(data.telegram_id or ""),        # 8. Telegram ID
-            getattr(data, 'username', "") or "",# 9. Username (если передается в B2BData)
-            "Нова заявка",                      # 10. Статус
-            "",                                 # 11. Коментар адміна (пусто)
-            ""                                  # 12. Останній повідомлений статус (пусто)
+            date_str,
+            data.company,
+            data.phone,
+            data.details or "",
+            str(data.telegram_id or ""),
+            "Нова заявка"
         ]
 
-        # Записываем на наш единый лист (убедитесь, что sheet_b2b указывает на B2B_General)
-        sheet_B2B_General.append_row(new_row)
-        print(f"✅ B2B заявка №{order_number} від {data.company} успішно збережена!")
+        sheet_b2b.append_row(new_row)
+        print(f"✅ B2B заявка від {data.company} успішно збережена!")
 
         # 1. Повідомлення клієнту в Телеграм
         client_text = (
-            f"🤝 <b>Дякуємо за запит на співпрацю!</b>\n"
-            f"<b>Номер заявки:</b> #{order_number}\n\n"
+            f"🤝 <b>Дякуємо за запит на співпрацю!</b>\n\n"
             f"<b>Компанія:</b> {data.company}\n"
             f"Наш менеджер зв'яжеться з вами найближчим часом для обговорення індивідуальних умов."
         )
@@ -583,7 +571,7 @@ async def create_b2b_request(data: B2BData):
 
         # 2. Повідомлення адміністратору (в адмінський чат)
         admin_text = (
-            f"💼 <b>НОВА B2B ЗАЯВКА (Mini App) №{order_number}</b> 💼\n\n"
+            f"💼 <b>НОВА B2B ЗАЯВКА (Співпраця)</b> 💼\n\n"
             f"<b>Компанія:</b> {data.company}\n"
             f"<b>Телефон:</b> {data.phone}\n"
             f"<b>Деталі:</b> {data.details or 'Не вказано'}\n"
@@ -591,7 +579,7 @@ async def create_b2b_request(data: B2BData):
         )
         send_tg_message(ADMIN_CHAT_ID, admin_text)
 
-        return {"status": "success", "order_number": order_number}
+        return {"status": "success"}
 
     except Exception as e:
         print(f"❌ Помилка створення B2B заявки: {e}")
