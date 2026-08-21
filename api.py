@@ -125,23 +125,45 @@ def retry_google_api(max_retries=3):
 # --- 1. GET: Загрузка кабинета ---
 
 
-# --- Подключение к Google Таблицам ---
+# --- Подключення до Google Таблиць ---
 SCOPE = [
     "https://spreadsheets.google.com/feeds",
     "https://www.googleapis.com/auth/drive"
 ]
 
-CREDS = ServiceAccountCredentials.from_json_keyfile_name("credentials.json", SCOPE) 
-GS_CLIENT = gspread.authorize(CREDS)
+SPREADSHEET_NAME = "Pralnya"
 
-SPREADSHEET_NAME = "Pralnya" 
-spreadsheet = GS_CLIENT.open(SPREADSHEET_NAME)
+# Раніше підключення до Google Sheets відбувалося прямо тут, на рівні імпорту модуля —
+# 5 послідовних блокуючих мережевих запитів (auth + 4x worksheet()) виконувались ДО того,
+# як скрипт взагалі доходив до uvicorn.run(). Якщо Google API відповідав повільніше
+# звичайного — порт фізично не встигав відкритися до тайм-ауту порт-скану Render,
+# і деплой падав з "no open ports detected", хоча з кодом усе було гаразд.
+#
+# Тепер uvicorn стартує і відкриває порт одразу, а підключення до таблиці відбувається
+# вже ПІСЛЯ цього, в startup-події FastAPI — Render встигає побачити відкритий порт
+# незалежно від того, наскільки швидко відповість Google.
+GS_CLIENT = None
+spreadsheet = None
+sheet_clients = None
+sheet_orders = None
+sheet_atelier = None
+sheet_B2B_General = None
 
-# Подключаем листы
-sheet_clients = spreadsheet.worksheet("Clients")
-sheet_orders = spreadsheet.worksheet("Лист1")
-sheet_atelier = spreadsheet.worksheet("Atelier")
-sheet_b2b = spreadsheet.worksheet("B2B2.0")
+
+@app.on_event("startup")
+async def connect_google_sheets():
+    global GS_CLIENT, spreadsheet, sheet_clients, sheet_orders, sheet_atelier, sheet_B2B_General
+
+    creds = ServiceAccountCredentials.from_json_keyfile_name("credentials.json", SCOPE)
+    GS_CLIENT = gspread.authorize(creds)
+    spreadsheet = GS_CLIENT.open(SPREADSHEET_NAME)
+
+    sheet_clients = spreadsheet.worksheet("Clients")
+    sheet_orders = spreadsheet.worksheet("Лист1")
+    sheet_atelier = spreadsheet.worksheet("Atelier")
+    sheet_B2B_General = spreadsheet.worksheet("B2B_General")
+
+    print("✅ Google Sheets підключено (після старту порту)")
 
 # --- Модели данных ---
 class ClientProfile(BaseModel):
@@ -547,22 +569,34 @@ async def create_b2b_request(data: B2BData):
     try:
         now = datetime.now()
         date_str = now.strftime("%Y-%m-%d %H:%M")
+        
+        # Генерируем простой номер заявки (например: B2B-26081540 — дата и время)
+        order_number = f"B2B-{now.strftime('%d%m%H%M')}"
 
+        # Формируем строку из 12 элементов строго под новую единую структуру
         new_row = [
-            date_str,
-            data.company,
-            data.phone,
-            data.details or "",
-            str(data.telegram_id or ""),
-            "Нова заявка"
+            date_str,                           # 1. Дата
+            "Mini App",                         # 2. Джерело
+            order_number,                       # 3. Номер заявки
+            data.company,                       # 4. Клієнт (Ім'я / Компанія)
+            data.phone,                         # 5. Телефон
+            data.details or "",                 # 6. Опис / Деталі
+            "",                                 # 7. Фото (в B2B форме Mini App его нет)
+            str(data.telegram_id or ""),        # 8. Telegram ID
+            getattr(data, 'username', "") or "",# 9. Username (если передается в B2BData)
+            "Нова заявка",                      # 10. Статус
+            "",                                 # 11. Коментар адміна (пусто)
+            ""                                  # 12. Останній повідомлений статус (пусто)
         ]
 
-        sheet_b2b.append_row(new_row)
-        print(f"✅ B2B заявка від {data.company} успішно збережена!")
+        # Записываем на наш единый лист (убедитесь, что sheet_b2b указывает на B2B_General)
+        sheet_B2B_General.append_row(new_row)
+        print(f"✅ B2B заявка №{order_number} від {data.company} успішно збережена!")
 
         # 1. Повідомлення клієнту в Телеграм
         client_text = (
-            f"🤝 <b>Дякуємо за запит на співпрацю!</b>\n\n"
+            f"🤝 <b>Дякуємо за запит на співпрацю!</b>\n"
+            f"<b>Номер заявки:</b> #{order_number}\n\n"
             f"<b>Компанія:</b> {data.company}\n"
             f"Наш менеджер зв'яжеться з вами найближчим часом для обговорення індивідуальних умов."
         )
@@ -571,7 +605,7 @@ async def create_b2b_request(data: B2BData):
 
         # 2. Повідомлення адміністратору (в адмінський чат)
         admin_text = (
-            f"💼 <b>НОВА B2B ЗАЯВКА (Співпраця)</b> 💼\n\n"
+            f"💼 <b>НОВА B2B ЗАЯВКА (Mini App) №{order_number}</b> 💼\n\n"
             f"<b>Компанія:</b> {data.company}\n"
             f"<b>Телефон:</b> {data.phone}\n"
             f"<b>Деталі:</b> {data.details or 'Не вказано'}\n"
@@ -579,7 +613,7 @@ async def create_b2b_request(data: B2BData):
         )
         send_tg_message(ADMIN_CHAT_ID, admin_text)
 
-        return {"status": "success"}
+        return {"status": "success", "order_number": order_number}
 
     except Exception as e:
         print(f"❌ Помилка створення B2B заявки: {e}")
