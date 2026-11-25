@@ -20,9 +20,10 @@ except ImportError:
 from openai import AsyncOpenAI
 from fastapi.staticfiles import StaticFiles
 
-from fastapi import APIRouter, FastAPI, HTTPException, Body
+from fastapi import APIRouter, FastAPI, HTTPException, Body, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+from security import require_tg_user, price_cart
 from typing import Optional, Any
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
@@ -30,8 +31,9 @@ app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
+    # Лише сторінки Mini App на GitHub Pages. Додаткові адреси — через змінну ALLOWED_ORIGINS (через кому).
+    allow_origins=[o.strip() for o in os.getenv("ALLOWED_ORIGINS", "https://mykich.github.io").split(",") if o.strip()],
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -87,7 +89,7 @@ def send_tg_message(chat_id, text):
         "parse_mode": "HTML" # Позволяет использовать <b>жирный</b> текст и <i>курсив</i>
     }
     try:
-        response = requests.post(url, json=payload)
+        response = requests.post(url, json=payload, timeout=10)
         if not response.ok:
             print(f"⚠️ Ошибка отправки ТГ: {response.text}")
     except Exception as e:
@@ -200,8 +202,10 @@ class AIMessageData(BaseModel):
 router = APIRouter()
 
 @app.post("/api/ai")
-async def ai_chat(data: AIMessageData):
+async def ai_chat(data: AIMessageData, tg_user: dict = Depends(require_tg_user)):
     try:
+        # Обмеження довжини: кожен запит до OpenAI платний
+        data.message = (data.message or "")[:1000]
         # Проверяем, есть ли вообще ключ
         if not os.getenv("OPENAI_API_KEY"):
             return {"status": "success", "reply": "Вибачте, мій AI-модуль наразі налаштовується. Будь ласка, зверніться до менеджера або скористайтеся меню!"}
@@ -243,9 +247,10 @@ def get_loyalty_discount(total_spent: float) -> int:
 
 @app.get("/api/cabinet")
 @retry_google_api(max_retries=3)
-async def get_cabinet(user_id: int):
+async def get_cabinet(user_id: Optional[int] = None, tg_user: dict = Depends(require_tg_user)):
     try:
-        user_str_id = str(user_id)
+        # user_id з адреси більше не використовується: клієнта визначає підпис Telegram
+        user_str_id = str(tg_user["id"])
         client_data = {"name": "", "phone": "", "apartment": "", "discount": 0}
         
         # 1. Ищем данные клиента (через кэш)
@@ -308,8 +313,9 @@ async def get_cabinet(user_id: int):
 
 # --- 2. POST: Сохранение профиля ---
 @app.post("/api/cabinet")
-async def update_cabinet(profile: ClientProfile):
+async def update_cabinet(profile: ClientProfile, tg_user: dict = Depends(require_tg_user)):
     try:
+        profile.telegram_id = tg_user["id"]
         user_str_id = str(profile.telegram_id)
         all_clients = sheet_clients.get_all_records()
         
@@ -320,9 +326,13 @@ async def update_cabinet(profile: ClientProfile):
                 break
 
         if row_index:
-            sheet_clients.update_cell(row_index, 2, profile.first_name)
-            sheet_clients.update_cell(row_index, 3, profile.phone)
-            sheet_clients.update_cell(row_index, 4, profile.apartment)
+            # Порожні поля не затирають уже збережені дані
+            if profile.first_name:
+                sheet_clients.update_cell(row_index, 2, profile.first_name)
+            if profile.phone:
+                sheet_clients.update_cell(row_index, 3, profile.phone)
+            if profile.apartment:
+                sheet_clients.update_cell(row_index, 4, profile.apartment)
         else:
             new_row = [profile.telegram_id, profile.first_name, profile.phone, profile.apartment, "", ""]
             sheet_clients.append_row(new_row)
@@ -336,8 +346,13 @@ async def update_cabinet(profile: ClientProfile):
 @app.post("/api/orders")  # Check your endpoint name (/api/order or /api/orders)
 @app.post("/api/order")
 @app.post("/api/order/")
-async def create_order(order: OrderData):
+async def create_order(order: OrderData, tg_user: dict = Depends(require_tg_user)):
     try:
+        # Клієнт — лише той, чий підпис Telegram перевірено; telegram_id з тіла запиту ігнорується
+        order.telegram_id = tg_user["id"]
+        order.username = f"@{tg_user['username']}" if tg_user.get("username") else ""
+        # Ціни — лише з серверного каталогу (services.js), суми з браузера ігноруються
+        priced_items, catalog_total = price_cart(order.items)
         now = datetime.now()
         date_str = now.strftime("%Y-%m-%d %H:%M")
 
@@ -349,34 +364,12 @@ async def create_order(order: OrderData):
             # 1. Создаем переменную для подсчета общей суммы
             total_price = 0 
             
-            raw_items = order.items
-            
-            if isinstance(raw_items, str):
-                try:
-                    raw_items = json.loads(raw_items)
-                except:
-                    pass
-
-            if isinstance(raw_items, list):
-                for item in raw_items:
-                    if hasattr(item, "dict"):
-                        item = item.dict()
-                        
-                    if isinstance(item, dict):
-                        name = str(item.get("name", "")).strip()
-                        quantity = int(item.get("quantity", 1) or 1)
-                        
-                        # 2. Достаем цену из каждого товара
-                        item_price = float(item.get("price", 0))
-                        
-                        if name:
-                            # 3. Считаем сумму: цена * количество
-                            total_price += item_price * quantity
-                            
-                            if quantity > 1:
-                                item_names.append(f"• {name} — {quantity} шт.")
-                            else:
-                                item_names.append(f"• {name}")
+            for item in priced_items:
+                total_price += item["price"] * item["quantity"]
+                if item["quantity"] > 1:
+                    item_names.append(f"• {item['name']} — {item['quantity']} шт.")
+                else:
+                    item_names.append(f"• {item['name']}")
                                 
             if not item_names:
                 item_names.append("• Послуги ательє (деталі не розпізнано)")
@@ -441,30 +434,12 @@ async def create_order(order: OrderData):
  # === ИНАЧЕ: ЭТО СТАНДАРТНЫЙ ЗАКАЗ (ПРАЧЕЧНАЯ) ===
         else:
             # 1. Красиво форматируем вещи с учетом количества
-            items_str = ""
-            total_price = float(order.price or 0)
-            
-            if isinstance(order.items, list):
-                item_names = []
-                calc_price = 0
-                for item in order.items:
-                    if isinstance(item, dict):
-                        name = item.get("name", "Річ")
-                        price = float(item.get("price", 0))
-                        qty = int(item.get("quantity", 1))
-                        
-                        if qty > 1:
-                            item_names.append(f"{name} ({qty} шт)")
-                        else:
-                            item_names.append(name)
-                            
-                        calc_price += price * qty
-                
-                items_str = ", ".join(item_names)
-                if total_price == 0:
-                    total_price = calc_price
-            else:
-                items_str = str(order.items or "Послуги пральні")
+            item_names = [
+                f"{item['name']} ({item['quantity']} шт)" if item["quantity"] > 1 else item["name"]
+                for item in priced_items
+            ]
+            items_str = ", ".join(item_names)
+            total_price = catalog_total
 
             # 1.5 Знижка Pralnya Club — за сумою, яку клієнт вже витратив раніше
             all_orders_for_loyalty = get_cached_records(sheet_orders, "orders_loyalty", ttl=LOYALTY_CACHE_TTL)
@@ -537,6 +512,8 @@ async def create_order(order: OrderData):
 
             return {"status": "success", "order_id": order_id}
 
+    except HTTPException:
+        raise
     except Exception as e:
         print("❌ Ошибка при создании заказа:")
         print(traceback.format_exc())
@@ -565,8 +542,10 @@ def get_cached_records(sheet, cache_key, ttl=None):
     
 # --- 4. POST: Заявка B2B (Співпраця) ---
 @app.post("/api/b2b")
-async def create_b2b_request(data: B2BData):
+async def create_b2b_request(data: B2BData, tg_user: dict = Depends(require_tg_user)):
     try:
+        data.telegram_id = tg_user["id"]
+        username = f"@{tg_user['username']}" if tg_user.get("username") else ""
         now = datetime.now()
         date_str = now.strftime("%Y-%m-%d %H:%M")
         
@@ -583,7 +562,7 @@ async def create_b2b_request(data: B2BData):
             data.details or "",                 # 6. Опис / Деталі
             "",                                 # 7. Фото (в B2B форме Mini App его нет)
             str(data.telegram_id or ""),        # 8. Telegram ID
-            getattr(data, 'username', "") or "",# 9. Username (если передается в B2BData)
+            username,                           # 9. Username (если передается в B2BData)
             "Нова заявка",                      # 10. Статус
             "",                                 # 11. Коментар адміна (пусто)
             ""                                  # 12. Останній повідомлений статус (пусто)

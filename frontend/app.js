@@ -10,6 +10,22 @@ if (tg) {
     tg.expand();
 }
 
+// 1.1 Запити до API з підписом Telegram.
+// Сервер перевіряє initData і сам визначає клієнта — telegram_id з браузера він не приймає.
+function apiFetch(url, options = {}) {
+    const headers = Object.assign({}, options.headers || {}, {
+        "X-Telegram-Init-Data": window.Telegram?.WebApp?.initData || ""
+    });
+    return fetch(url, Object.assign({}, options, { headers }));
+}
+
+// Mini App відкрито не з Telegram — замовлення неможливе (сервер не знає, хто клієнт)
+function requireTelegramUser() {
+    if (window.Telegram?.WebApp?.initDataUnsafe?.user) return true;
+    alert("Відкрийте застосунок через Telegram-бот @CleanHomeKyivBot, щоб оформити замовлення.");
+    return false;
+}
+
 // 2. Глобальный State (Состояние приложения)
 const state = {
     currentPage: "home",
@@ -745,7 +761,7 @@ if (confirmOrderBtn) {
         let rawName = document.getElementById("profile-display-name")?.textContent?.trim();
         
         let clientName = rawName;
-        if (!rawName || rawName === "Клієнт") {
+        if (!rawName || rawName === "Клієнт" || rawName === "Завантаження...") {
             const firstName = tgUser?.first_name || "";
             const lastName = tgUser?.last_name || "";
             clientName = `${firstName} ${lastName}`.trim() || "Клієнт";
@@ -764,6 +780,8 @@ if (confirmOrderBtn) {
             clientPhone = ""; 
         }
 
+        if (!requireTelegramUser()) return;
+
         // === 3. Определяем тип услуги (Ателье или Прачечная) ===
         const isAtelier = state.cart.some(item => item.service === 'atelier');
         const orderService = isAtelier ? 'atelier' : 'laundry';
@@ -774,7 +792,7 @@ if (confirmOrderBtn) {
         confirmOrderBtn.disabled = true;
 
         try {
-            const response = await fetch(`${NGROK_URL}/api/order`, {
+            const response = await apiFetch(`${NGROK_URL}/api/order`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -831,6 +849,8 @@ if (b2bSubmitBtn) {
         const phone = phoneEl?.value.trim();
         const details = detailsEl?.value.trim() || "";
 
+        if (!requireTelegramUser()) return;
+
         if (!company || !phone) {
             Telegram.WebApp.showAlert("Будь ласка, вкажіть назву компанії та контактний телефон.");
             return;
@@ -842,7 +862,7 @@ if (b2bSubmitBtn) {
         b2bSubmitBtn.disabled = true;
 
         try {
-            const response = await fetch(`${NGROK_URL}/api/b2b`, {
+            const response = await apiFetch(`${NGROK_URL}/api/b2b`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -886,14 +906,14 @@ if (b2bSubmitBtn) {
 const NGROK_URL = "https://mini-mrip.onrender.com"; 
 const safeTg = window.Telegram ? window.Telegram.WebApp : null;
 
-let userId = 123456789;
+let userId = null; // без Telegram клієнта немає (раніше тут був тестовий 123456789)
 if (safeTg && safeTg.initDataUnsafe && safeTg.initDataUnsafe.user) {
     userId = safeTg.initDataUnsafe.user.id;
 }
 
 async function fetchCabinetData() {
     try {
-        const response = await fetch(`${NGROK_URL}/api/cabinet?user_id=${userId}`, {
+        const response = await apiFetch(`${NGROK_URL}/api/cabinet?user_id=${userId}`, {
             method: 'GET'
         });
         
@@ -1032,8 +1052,8 @@ async function saveProfileData() {
 // БЕРЕМ ДАННЫЕ ИЗ ТВОЕЙ ШТОРКИ
 const apartmentInput = document.getElementById("address-input"); 
  
-const currentUserId = safeTg && safeTg.initDataUnsafe && safeTg.initDataUnsafe.user ? safeTg.initDataUnsafe.user.id : 123456789;
-    const currentFirstName = safeTg && safeTg.initDataUnsafe && safeTg.initDataUnsafe.user ? safeTg.initDataUnsafe.user.first_name : "Ігор";
+const currentUserId = safeTg && safeTg.initDataUnsafe && safeTg.initDataUnsafe.user ? safeTg.initDataUnsafe.user.id : null;
+    const currentFirstName = safeTg && safeTg.initDataUnsafe && safeTg.initDataUnsafe.user ? safeTg.initDataUnsafe.user.first_name : "";
 
     const payload = {
         telegram_id: currentUserId,
@@ -1043,7 +1063,7 @@ const currentUserId = safeTg && safeTg.initDataUnsafe && safeTg.initDataUnsafe.u
     };
 
     try {
-        const response = await fetch(`${NGROK_URL}/api/cabinet`, {
+        const response = await apiFetch(`${NGROK_URL}/api/cabinet`, {
     method: "POST",
     headers: {
         "Content-Type": "application/json"
@@ -1080,7 +1100,7 @@ async function sendAiMessage(textToSend = null) {
     const loadingId = appendLoadingBubble();
 
     try {
-        const response = await fetch(`${NGROK_URL}/api/ai`, {
+        const response = await apiFetch(`${NGROK_URL}/api/ai`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -1172,7 +1192,7 @@ async function loadCabinetData() {
     if (!container) return;
 
     try {
-        const response = await fetch(`${NGROK_URL}/api/cabinet?user_id=${userId}`, {
+        const response = await apiFetch(`${NGROK_URL}/api/cabinet?user_id=${userId}`, {
             method: 'GET'
         });
 
@@ -1325,7 +1345,7 @@ if (saveProfileBtn) {
         saveProfileBtn.disabled = true;
 
         try {
-            const response = await fetch(`${NGROK_URL}/api/cabinet`, {
+            const response = await apiFetch(`${NGROK_URL}/api/cabinet`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
