@@ -21,12 +21,12 @@ except ImportError:
 from openai import AsyncOpenAI
 from fastapi.staticfiles import StaticFiles
 
-from fastapi import APIRouter, FastAPI, HTTPException, Body, Depends
+from fastapi import APIRouter, FastAPI, HTTPException, Body, Depends, Response
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import html
 import uuid
-from security import require_tg_user, price_cart, catalog_prompt_text
+from security import require_tg_user, price_cart, catalog_prompt_text, PRICE_DATA
 from typing import Optional, Any
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
@@ -195,6 +195,14 @@ class AIMessageData(BaseModel):
     telegram_id: Optional[Any] = None
     
 router = APIRouter()
+
+@app.get("/api/prices")
+@app.head("/api/prices")
+async def get_prices(response: Response):
+    """Єдиний прайс для бота й сайту (публічні дані, без персональної інформації)."""
+    response.headers["Cache-Control"] = "public, max-age=300"
+    return PRICE_DATA
+
 
 @app.post("/api/ai")
 async def ai_chat(data: AIMessageData, tg_user: dict = Depends(require_tg_user)):
@@ -388,7 +396,7 @@ async def create_order(order: OrderData, tg_user: dict = Depends(require_tg_user
         # Клієнт — лише той, чий підпис Telegram перевірено; telegram_id з тіла запиту ігнорується
         order.telegram_id = tg_user["id"]
         order.username = f"@{tg_user['username']}" if tg_user.get("username") else ""
-        # Ціни — лише з серверного каталогу (services.js), суми з браузера ігноруються
+        # Ціни — лише з серверного каталогу (catalog/prices.json), суми з браузера ігноруються
         priced_items, catalog_total = price_cart(order.items)
         if is_duplicate_request(order.telegram_id, priced_items):
             raise HTTPException(status_code=409, detail="Це замовлення вже прийнято")

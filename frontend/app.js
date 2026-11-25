@@ -221,7 +221,7 @@ function createServiceCard(product, onUpdate) {
                 ${product.description}
             </p>
             <div class="text-blue-600 text-[16px] font-bold mt-3">
-                ${product.price} ₴
+                ${product.price} ₴${product.unit && product.unit !== 'шт' ? ' / ' + product.unit : ''}
             </div>
         </div>
         <div class="shrink-0 flex items-center justify-center min-w-[48px]">
@@ -363,7 +363,7 @@ function renderPopularServices() {
         `;
         card.innerHTML = `
             <div class="text-[15px] font-bold text-gray-900 leading-tight min-h-[40px]">${product.name}</div>
-            <div class="text-blue-600 text-[15px] font-bold mt-2">${product.price} ₴</div>
+            <div class="text-blue-600 text-[15px] font-bold mt-2">${product.price} ₴${product.unit && product.unit !== 'шт' ? ' / ' + product.unit : ''}</div>
             <button class="popular-add-btn mt-3 w-full py-2 rounded-[12px] bg-blue-50 text-blue-600 font-semibold text-sm hover:bg-blue-600 hover:text-white transition-colors">
                 + Додати
             </button>
@@ -436,7 +436,7 @@ function renderAtelierServices() {
             <div class="flex-1 pr-4">
                 <h3 class="text-[17px] font-bold text-gray-900">${product.name}</h3>
                 <p class="text-[13px] text-gray-500 mt-1.5">${product.description}</p>
-                <div class="text-indigo-600 text-[16px] font-bold mt-3">${product.price} ₴</div>
+                <div class="text-indigo-600 text-[16px] font-bold mt-3">${product.price} ₴${product.unit && product.unit !== 'шт' ? ' / ' + product.unit : ''}</div>
             </div>
             <div class="shrink-0 flex items-center justify-center min-w-[48px]">
                 ${controlsHTML}
