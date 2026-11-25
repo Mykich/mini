@@ -1,68 +1,17 @@
 // ======================================
-// Pralnya Vdoma
-// Services Catalog v1.1
+// Pralnya Vdoma — каталог послуг
+// ЗГЕНЕРОВАНО з catalog/prices.json (версія 2026-11-25).
+// Не редагуйте вручну: змініть prices.json і запустіть python tools/build_services.py
 // ======================================
 
 const servicesData = {
-
-    atelier: [
-        {
-            id: 601,
-            name: "Підшити штани / джинси",
-            description: "Збереження оригінального низу",
-            price: 300,
-            category: "atelier"
-        },
-        {
-            id: 602,
-            name: "Ремонт шва",
-            description: "Відновлення цілісності виробу",
-            price: 250,
-            category: "atelier"
-        },
-        {
-            id: 603,
-            name: "Заміна блискавки",
-            description: "Якісна фурнітура (без вартості блискавки)",
-            price: 400,
-            category: "atelier"
-        },
-        {
-            id: 604,
-            name: "Укоротити сукню / спідницю",
-            description: "Точний підгін по фігурі",
-            price: 450,
-            category: "atelier"
-        },
-        {
-            id: 605,
-            name: "Вкоротити рукави",
-            description: "Точний підгін по фігурі",
-            price: 350,
-            category: "atelier"
-        },
-        {
-            id: 606,
-            name: "Ремонт кишень",
-            description: "Відновлення цілісності виробу",
-            price: 300,
-            category: "atelier"
-        },
-        {
-            id: 607,
-            name: "Дрібний ремонт одягу",
-            description: "Дрібні виправлення та підгонка",
-            price: 200,
-            category: "atelier"
-        }
-    ],
-
     clothing: [
         {
             id: 1,
             name: "Футболка",
             description: "Прання та професійне сушіння",
-            price: 180,
+            price: 200,
+            unit: "шт",
             category: "clothing",
             image: "images/services/tshirt.png"
         },
@@ -70,7 +19,8 @@ const servicesData = {
             id: 2,
             name: "Майка",
             description: "Прання та професійне сушіння",
-            price: 170,
+            price: 180,
+            unit: "шт",
             category: "clothing",
             image: "images/services/tanktop.png"
         },
@@ -79,6 +29,7 @@ const servicesData = {
             name: "Сорочка",
             description: "Прання та прасування",
             price: 250,
+            unit: "шт",
             category: "clothing",
             image: "images/services/shirt.png"
         },
@@ -87,6 +38,7 @@ const servicesData = {
             name: "Блуза",
             description: "Делікатне прання",
             price: 240,
+            unit: "шт",
             category: "clothing",
             image: "images/services/blouse.png"
         },
@@ -94,7 +46,8 @@ const servicesData = {
             id: 5,
             name: "Светр",
             description: "Делікатне прання",
-            price: 320,
+            price: 300,
+            unit: "шт",
             category: "clothing",
             image: "images/services/sweater.png"
         },
@@ -102,7 +55,8 @@ const servicesData = {
             id: 6,
             name: "Худі",
             description: "Прання та сушіння",
-            price: 350,
+            price: 320,
+            unit: "шт",
             category: "clothing",
             image: "images/services/hoodie.png"
         },
@@ -111,6 +65,7 @@ const servicesData = {
             name: "Джинси",
             description: "Прання та прасування",
             price: 280,
+            unit: "шт",
             category: "clothing",
             image: "images/services/jeans.png"
         },
@@ -118,7 +73,8 @@ const servicesData = {
             id: 8,
             name: "Брюки",
             description: "Прання та прасування",
-            price: 250,
+            price: 280,
+            unit: "шт",
             category: "clothing",
             image: "images/services/trousers.png"
         },
@@ -127,6 +83,7 @@ const servicesData = {
             name: "Спідниця",
             description: "Делікатне прання",
             price: 240,
+            unit: "шт",
             category: "clothing",
             image: "images/services/skirt.png"
         },
@@ -134,7 +91,8 @@ const servicesData = {
             id: 10,
             name: "Сукня",
             description: "Преміум догляд",
-            price: 450,
+            price: 400,
+            unit: "шт",
             category: "clothing",
             image: "images/services/dress.png"
         },
@@ -143,6 +101,7 @@ const servicesData = {
             name: "Шорти",
             description: "Прання та сушіння",
             price: 180,
+            unit: "шт",
             category: "clothing",
             image: "images/services/shorts.png"
         },
@@ -150,7 +109,8 @@ const servicesData = {
             id: 12,
             name: "Світшот",
             description: "Прання та сушіння",
-            price: 350,
+            price: 320,
+            unit: "шт",
             category: "clothing",
             image: "images/services/sweatshirt.png"
         },
@@ -158,50 +118,55 @@ const servicesData = {
             id: 13,
             name: "Кофта",
             description: "Делікатне прання",
-            price: 350,
+            price: 300,
+            unit: "шт",
             category: "clothing",
             image: "images/services/cardigan.png"
         }
     ],
-
     outerwear: [
         {
             id: 101,
             name: "Вітровка",
             description: "Професійне очищення",
-            price: 650,
+            price: 480,
+            unit: "шт",
             category: "outerwear",
             image: "images/services/windbreaker.png"
         },
         {
             id: 102,
-            name: "Куртка",
+            name: "Куртка демісезонна",
             description: "Прання та сушіння",
-            price: 850,
+            price: 550,
+            unit: "шт",
             category: "outerwear",
             image: "images/services/jacket.png"
         },
         {
             id: 103,
-            name: "Пальто",
+            name: "Пальто текстильне",
             description: "Делікатна чистка",
-            price: 950,
+            price: 1000,
+            unit: "шт",
             category: "outerwear",
             image: "images/services/coat.png"
         },
         {
             id: 104,
             name: "Пуховик короткий",
-            description: "Відновлення пуху",
-            price: 1200,
+            description: "Аквачистка та відновлення пуху",
+            price: 850,
+            unit: "шт",
             category: "outerwear",
             image: "images/services/down-short.png"
         },
         {
             id: 105,
             name: "Пуховик довгий",
-            description: "Premium догляд",
-            price: 1450,
+            description: "Аквачистка та відновлення пуху",
+            price: 990,
+            unit: "шт",
             category: "outerwear",
             image: "images/services/down-long.png"
         },
@@ -209,7 +174,8 @@ const servicesData = {
             id: 106,
             name: "Куртка джинсова",
             description: "Професійне очищення",
-            price: 780,
+            price: 480,
+            unit: "шт",
             category: "outerwear",
             image: "images/services/denim-jacket.png"
         },
@@ -217,7 +183,8 @@ const servicesData = {
             id: 107,
             name: "Плащ / Тренч",
             description: "Делікатна чистка",
-            price: 1000,
+            price: 650,
+            unit: "шт",
             category: "outerwear",
             image: "images/services/trench.png"
         },
@@ -225,7 +192,8 @@ const servicesData = {
             id: 108,
             name: "Жилет",
             description: "Професійне очищення",
-            price: 750,
+            price: 400,
+            unit: "шт",
             category: "outerwear",
             image: "images/services/vest.png"
         },
@@ -233,18 +201,19 @@ const servicesData = {
             id: 109,
             name: "Піджак",
             description: "Делікатна чистка",
-            price: 750,
+            price: 650,
+            unit: "шт",
             category: "outerwear",
             image: "images/services/blazer.png"
         }
     ],
-
     textile: [
         {
             id: 201,
             name: "Комплект постелі",
             description: "Прання та прасування",
-            price: 550,
+            price: 450,
+            unit: "шт",
             category: "textile",
             image: "images/services/bedding.png"
         },
@@ -253,6 +222,7 @@ const servicesData = {
             name: "Плед",
             description: "Делікатне прання",
             price: 550,
+            unit: "шт",
             category: "textile",
             image: "images/services/plaid.png"
         },
@@ -260,7 +230,8 @@ const servicesData = {
             id: 203,
             name: "Ковдра",
             description: "Глибоке очищення",
-            price: 850,
+            price: 600,
+            unit: "шт",
             category: "textile",
             image: "images/services/blanket.png"
         },
@@ -268,7 +239,8 @@ const servicesData = {
             id: 204,
             name: "Подушка",
             description: "Антибактеріальна обробка",
-            price: 350,
+            price: 320,
+            unit: "шт",
             category: "textile",
             image: "images/services/pillow.png"
         },
@@ -276,7 +248,8 @@ const servicesData = {
             id: 205,
             name: "Ковдра пухова",
             description: "Преміальний догляд за пуховим наповнювачем",
-            price: 1200,
+            price: 1250,
+            unit: "шт",
             category: "textile",
             image: "images/services/down-blanket.png"
         },
@@ -284,7 +257,8 @@ const servicesData = {
             id: 206,
             name: "Подушка велика (50х60–70х70)",
             description: "Антибактеріальна обробка",
-            price: 700,
+            price: 450,
+            unit: "шт",
             category: "textile",
             image: "images/services/pillow-large.png"
         },
@@ -292,7 +266,8 @@ const servicesData = {
             id: 207,
             name: "М'яка іграшка",
             description: "Дбайливе прання та сушіння",
-            price: 550,
+            price: 350,
+            unit: "шт",
             category: "textile",
             image: "images/services/toy.png"
         },
@@ -300,7 +275,8 @@ const servicesData = {
             id: 208,
             name: "Покривало",
             description: "Прання та прасування",
-            price: 850,
+            price: 750,
+            unit: "шт",
             category: "textile",
             image: "images/services/bedspread.png"
         },
@@ -308,7 +284,8 @@ const servicesData = {
             id: 209,
             name: "Тюль / органза",
             description: "Ціна за 1 м² — у кількості вкажіть площу виробу в м²",
-            price: 220,
+            price: 180,
+            unit: "м²",
             category: "textile",
             image: "images/services/tulle.png"
         },
@@ -316,7 +293,8 @@ const servicesData = {
             id: 210,
             name: "Штори прості",
             description: "Ціна за 1 м² — у кількості вкажіть площу виробу в м²",
-            price: 380,
+            price: 260,
+            unit: "м²",
             category: "textile",
             image: "images/services/curtains.png"
         },
@@ -324,15 +302,17 @@ const servicesData = {
             id: 211,
             name: "Штори щільні / на підкладці",
             description: "Ціна за 1 м² — у кількості вкажіть площу виробу в м²",
-            price: 480,
+            price: 320,
+            unit: "м²",
             category: "textile",
             image: "images/services/curtains-heavy.png"
         },
         {
             id: 212,
-            name: "Рушники",
-            description: "Прання та сушіння",
-            price: 120,
+            name: "Рушник малий",
+            description: "Прання та сушіння, рушник для рук або обличчя",
+            price: 60,
+            unit: "шт",
             category: "textile",
             image: "images/services/towel.png"
         },
@@ -341,6 +321,7 @@ const servicesData = {
             name: "Халат",
             description: "Прання та сушіння",
             price: 350,
+            unit: "шт",
             category: "textile",
             image: "images/services/robe.png"
         },
@@ -349,17 +330,27 @@ const servicesData = {
             name: "Наматрацник",
             description: "Глибоке очищення",
             price: 800,
+            unit: "шт",
             category: "textile",
             image: "images/services/mattress-cover.png"
+        },
+        {
+            id: 215,
+            name: "Рушник великий",
+            description: "Прання та сушіння, банний рушник",
+            price: 100,
+            unit: "шт",
+            category: "textile",
+            image: "images/services/towel.png"
         }
     ],
-
     shoes: [
         {
             id: 301,
             name: "Кросівки",
             description: "Комплексне очищення",
-            price: 650,
+            price: 550,
+            unit: "пара",
             category: "shoes",
             image: "images/services/sneakers.png"
         },
@@ -367,18 +358,19 @@ const servicesData = {
             id: 302,
             name: "Черевики",
             description: "Професійне очищення",
-            price: 850,
+            price: 700,
+            unit: "пара",
             category: "shoes",
             image: "images/services/boots.png"
         }
     ],
-
     accessories: [
         {
             id: 401,
             name: "Рюкзак",
             description: "Комплексне очищення",
             price: 550,
+            unit: "шт",
             category: "accessories",
             image: "images/services/backpack.png"
         },
@@ -387,6 +379,7 @@ const servicesData = {
             name: "Сумка",
             description: "Делікатне очищення",
             price: 650,
+            unit: "шт",
             category: "accessories",
             image: "images/services/bag.png"
         },
@@ -395,6 +388,7 @@ const servicesData = {
             name: "Краватка",
             description: "Чистка та прасування",
             price: 150,
+            unit: "шт",
             category: "accessories",
             image: "images/services/tie.png"
         },
@@ -403,17 +397,18 @@ const servicesData = {
             name: "Шарф / Хустка",
             description: "Делікатне прання",
             price: 300,
+            unit: "шт",
             category: "accessories",
             image: "images/services/scarf.png"
         }
     ],
-
     aquaclean: [
         {
             id: 501,
             name: "Весільна сукня",
             description: "Аквачистка та делікатне сушіння",
             price: 3000,
+            unit: "шт",
             category: "aquaclean",
             image: "images/services/wedding.png"
         },
@@ -422,17 +417,18 @@ const servicesData = {
             name: "Кашемір",
             description: "Делікатна аквачистка",
             price: 650,
+            unit: "шт",
             category: "aquaclean",
             image: "images/services/cashmere.png"
         }
     ],
-
     ironing: [
         {
             id: 701,
             name: "Футболка",
             description: "Тільки прасування, без прання",
             price: 90,
+            unit: "шт",
             category: "ironing",
             image: "images/services/iron-tshirt.png"
         },
@@ -441,6 +437,7 @@ const servicesData = {
             name: "Сорочка",
             description: "Тільки прасування, без прання",
             price: 130,
+            unit: "шт",
             category: "ironing",
             image: "images/services/iron-shirt.png"
         },
@@ -449,6 +446,7 @@ const servicesData = {
             name: "Джинси",
             description: "Тільки прасування, без прання",
             price: 100,
+            unit: "шт",
             category: "ironing",
             image: "images/services/iron-jeans.png"
         },
@@ -457,6 +455,7 @@ const servicesData = {
             name: "Брюки зі стрілками",
             description: "Тільки прасування, без прання",
             price: 180,
+            unit: "шт",
             category: "ironing",
             image: "images/services/iron-trousers.png"
         },
@@ -465,6 +464,7 @@ const servicesData = {
             name: "Спідниця коротка",
             description: "Тільки прасування, без прання",
             price: 100,
+            unit: "шт",
             category: "ironing",
             image: "images/services/iron-skirt-short.png"
         },
@@ -473,6 +473,7 @@ const servicesData = {
             name: "Спідниця довга",
             description: "Тільки прасування, без прання",
             price: 150,
+            unit: "шт",
             category: "ironing",
             image: "images/services/iron-skirt-long.png"
         },
@@ -481,6 +482,7 @@ const servicesData = {
             name: "Сукня",
             description: "Тільки прасування, без прання",
             price: 250,
+            unit: "шт",
             category: "ironing",
             image: "images/services/iron-dress.png"
         },
@@ -489,6 +491,7 @@ const servicesData = {
             name: "Блуза",
             description: "Тільки прасування, без прання",
             price: 180,
+            unit: "шт",
             category: "ironing",
             image: "images/services/iron-blouse.png"
         },
@@ -497,6 +500,7 @@ const servicesData = {
             name: "Кофта / Светр",
             description: "Тільки прасування, без прання",
             price: 200,
+            unit: "шт",
             category: "ironing",
             image: "images/services/iron-sweater.png"
         },
@@ -505,6 +509,7 @@ const servicesData = {
             name: "Краватка",
             description: "Тільки прасування, без прання",
             price: 100,
+            unit: "шт",
             category: "ironing",
             image: "images/services/iron-tie.png"
         },
@@ -513,6 +518,7 @@ const servicesData = {
             name: "Комплект постільної білизни",
             description: "Тільки прасування, без прання",
             price: 200,
+            unit: "шт",
             category: "ironing",
             image: "images/services/iron-bedding.png"
         },
@@ -521,6 +527,7 @@ const servicesData = {
             name: "Піджак",
             description: "Прасування відпарювачем",
             price: 180,
+            unit: "шт",
             category: "ironing",
             image: "images/services/iron-blazer.png"
         },
@@ -529,6 +536,7 @@ const servicesData = {
             name: "Пальто",
             description: "Прасування відпарювачем",
             price: 320,
+            unit: "шт",
             category: "ironing",
             image: "images/services/iron-coat.png"
         },
@@ -537,17 +545,18 @@ const servicesData = {
             name: "Куртка",
             description: "Прасування відпарювачем",
             price: 320,
+            unit: "шт",
             category: "ironing",
             image: "images/services/iron-jacket.png"
         }
     ],
-
     extra: [
         {
             id: 801,
             name: "Виведення плями",
             description: "Ціна за одну пляму",
             price: 80,
+            unit: "шт",
             category: "extra",
             image: "images/services/stain.png"
         },
@@ -556,6 +565,7 @@ const servicesData = {
             name: "Чистка катишків",
             description: "За одну річ",
             price: 100,
+            unit: "шт",
             category: "extra",
             image: "images/services/pilling.png"
         },
@@ -564,6 +574,7 @@ const servicesData = {
             name: "Кондиціонування",
             description: "Додатково до прання, за одне завантаження",
             price: 30,
+            unit: "шт",
             category: "extra",
             image: "images/services/conditioner.png"
         },
@@ -572,6 +583,7 @@ const servicesData = {
             name: "Відбілювання",
             description: "Додатково до прання, за одне завантаження",
             price: 40,
+            unit: "шт",
             category: "extra",
             image: "images/services/bleach.png"
         },
@@ -580,12 +592,107 @@ const servicesData = {
             name: "Накрохмалювання білизни",
             description: "Для комплекту постільної білизни",
             price: 200,
+            unit: "шт",
             category: "extra",
             image: "images/services/starch.png"
         }
+    ],
+    atelier: [
+        {
+            id: 601,
+            name: "Підшити штани",
+            description: "Збереження оригінального низу",
+            price: 450,
+            unit: "шт",
+            category: "atelier"
+        },
+        {
+            id: 602,
+            name: "Ремонт шва",
+            description: "Відновлення цілісності виробу",
+            price: 280,
+            unit: "шт",
+            category: "atelier"
+        },
+        {
+            id: 603,
+            name: "Заміна блискавки: штани / спідниця",
+            description: "Без вартості блискавки",
+            price: 550,
+            unit: "шт",
+            category: "atelier"
+        },
+        {
+            id: 604,
+            name: "Укоротити сукню / спідницю",
+            description: "Точний підгін по фігурі",
+            price: 550,
+            unit: "шт",
+            category: "atelier"
+        },
+        {
+            id: 605,
+            name: "Вкоротити рукави сорочки",
+            description: "Точний підгін по фігурі",
+            price: 450,
+            unit: "шт",
+            category: "atelier"
+        },
+        {
+            id: 606,
+            name: "Ремонт кишень",
+            description: "Відновлення цілісності виробу",
+            price: 450,
+            unit: "шт",
+            category: "atelier"
+        },
+        {
+            id: 607,
+            name: "Дрібний ремонт одягу",
+            description: "Дрібні виправлення та підгонка",
+            price: 250,
+            unit: "шт",
+            category: "atelier"
+        },
+        {
+            id: 608,
+            name: "Підшити джинси зі збереженням фабричного шву",
+            description: "Оригінальний низ зберігається",
+            price: 600,
+            unit: "шт",
+            category: "atelier"
+        },
+        {
+            id: 609,
+            name: "Вкоротити рукави піджака / пальто / куртки",
+            description: "Точний підгін по фігурі",
+            price: 900,
+            unit: "шт",
+            category: "atelier"
+        },
+        {
+            id: 610,
+            name: "Заміна блискавки: куртка / вітровка",
+            description: "Без вартості блискавки",
+            price: 900,
+            unit: "шт",
+            category: "atelier"
+        },
+        {
+            id: 611,
+            name: "Заміна блискавки: пуховик / пальто",
+            description: "Без вартості блискавки",
+            price: 1200,
+            unit: "шт",
+            category: "atelier"
+        },
+        {
+            id: 612,
+            name: "Пришити ґудзик",
+            description: "За один ґудзик",
+            price: 80,
+            unit: "шт",
+            category: "atelier"
+        }
     ]
-
 };
-
-console.log("✅ services.js успешно загружен");
-console.log(servicesData);
