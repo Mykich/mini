@@ -90,16 +90,37 @@ _ITEM_RE = re.compile(
 )
 
 
+_SECTION_RE = re.compile(r"^\s{4}(\w+):\s*\[", re.M)
+
+# Назви розділів каталогу українською (для промпту ІІ і повідомлень)
+SECTION_TITLES = {
+    "clothing": "Прання одягу",
+    "outerwear": "Верхній одяг",
+    "textile": "Домашній текстиль",
+    "shoes": "Взуття",
+    "accessories": "Аксесуари",
+    "aquaclean": "Аквачистка (преміум)",
+    "ironing": "Прасування без прання",
+    "extra": "Додаткові послуги",
+    "atelier": "Ательє",
+}
+
+
 def load_catalog(path: str = SERVICES_JS) -> dict:
-    """Читає services.js і повертає {id: {"name": ..., "price": ...}}."""
+    """Читає services.js і повертає {id: {"name", "price", "section"}}."""
     with open(path, encoding="utf-8") as f:
         text = f.read()
+    sections = [(m.start(), m.group(1)) for m in _SECTION_RE.finditer(text)]
     catalog = {}
-    for item_id, name, price in _ITEM_RE.findall(text):
-        item_id = int(item_id)
+    for m in _ITEM_RE.finditer(text):
+        item_id, name, price = int(m.group(1)), m.group(2), float(m.group(3))
         if item_id in catalog:
             raise RuntimeError(f"У services.js два товари з id {item_id}")
-        catalog[item_id] = {"name": name, "price": float(price)}
+        section = ""
+        for pos, key in sections:
+            if pos < m.start():
+                section = key
+        catalog[item_id] = {"name": name, "price": price, "section": section}
     if not catalog:
         raise RuntimeError("Не вдалося прочитати жодної ціни з services.js")
     return catalog
@@ -130,6 +151,25 @@ def price_cart(items, max_qty: int = 99):
         if not product:
             raise HTTPException(status_code=400, detail=f"Невідома послуга (id {item_id})")
         qty = max(1, min(qty, max_qty))
-        lines.append({"id": item_id, "name": product["name"], "price": product["price"], "quantity": qty})
+        lines.append({
+            "id": item_id,
+            "name": product["name"],
+            "price": product["price"],
+            "quantity": qty,
+            "section": product["section"],
+        })
         total += product["price"] * qty
     return lines, total
+
+
+def catalog_prompt_text() -> str:
+    """Прайс для промпту ІІ, зібраний з того самого каталогу, що бачить клієнт."""
+    by_section = {}
+    for item in CATALOG.values():
+        by_section.setdefault(item["section"], []).append(item)
+    parts = []
+    for key, items in by_section.items():
+        title = SECTION_TITLES.get(key, key)
+        line = "; ".join(f"{i['name']} — від {int(i['price'])} ₴" for i in items)
+        parts.append(f"- {title}: {line}")
+    return "\n".join(parts)

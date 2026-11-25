@@ -2,6 +2,7 @@ import uvicorn
 from datetime import datetime
 import traceback
 import json # Добавь в самый верх файла, если еще нет
+import re
 import requests
 import os
 import time
@@ -23,7 +24,9 @@ from fastapi.staticfiles import StaticFiles
 from fastapi import APIRouter, FastAPI, HTTPException, Body, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from security import require_tg_user, price_cart
+import html
+import uuid
+from security import require_tg_user, price_cart, catalog_prompt_text
 from typing import Optional, Any
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
@@ -55,21 +58,13 @@ SYSTEM_PROMPT = """Ти — преміальний AI-консультант е�
 ❗️ ГОЛОВНЕ ПРАВИЛО: Пиши максимально КРАТКО, ЛАКОНІЧНО і ПО СУТІ. Жодної «води», довгих вступів та розлогих описів. Тільки конструктивні відповіді в 1-3 речення, якщо це можливо. Форматуй текст красиво (використовуй емодзі та списки).
 
 Експертиза (використовуй точково, без зайвих деталей):
-1. Пуховики та зимовий одяг: Експертиза преміум-рівня (як у ienki-ienki) — дбайливий догляд за пухом, відновлення об'єму.
+1. Пуховики та зимовий одяг: дбайливий догляд за пухом, відновлення об'єму.
 2. Хімія: Преміальна гіпоалергенна хімія без різких запахів.
 3. Обладнання: Професійні машини IPSO та Danube.
 
-Орієнтовні ціни (базові, від):
-- Футболка / майка: від 170 ₴, сорочка / блуза: від 240 ₴
-- Джинси / брюки: від 250 ₴, сукня: від 450 ₴
-- Верхній одяг (вітровка → пуховик довгий): 650–1450 ₴
-- Білизна: комплект постелі 550 ₴, ковдра 850–1200 ₴, подушка від 350 ₴
-- Взуття: від 650 ₴, аксесуари (рюкзак/сумка): 550–650 ₴
-- Аквачистка (преміум): кашемір від 650 ₴, весільна сукня від 3000 ₴
-- Прасування без прання: від 90 ₴ (футболка) до 320 ₴ (пальто/куртка)
-- Додатково: виведення плями від 80 ₴, чистка катишків 100 ₴
-- Ательє: індивідуальний прорахунок після огляду майстром.
-Це орієнтир — точна ціна завжди в каталозі додатку, звіряй з ним, а не вигадуй.
+Прайс (орієнтовні ціни «від»; це той самий каталог, що бачить клієнт у застосунку):
+""" + catalog_prompt_text() + """
+Остаточна вартість погоджується після огляду речі. Складні речі (шкіра, замша, хутро, декор) — лише після огляду.
 
 Правила:
 - Не вигадуй невідомі ціни. Якщо послуги немає в прайсі — кажи, що треба спитати в менеджера.
@@ -275,10 +270,11 @@ async def get_cabinet(user_id: Optional[int] = None, tg_user: dict = Depends(req
             order_phone = str(row.get("Телефон", ""))
             
             if order_tg_id == user_str_id or (client_data["phone"] and order_phone == client_data["phone"]):
-                total_spent += parse_price_value(row.get("Сума", ""))
+                if "Скасовано" not in str(row.get("Статус", "")) and not str(row.get("Скасування", "")).strip():
+                    total_spent += parse_price_value(row.get("Сума", ""))
                 client_orders.append({
                     "id": str(row.get("Номер замовлення", "")),
-                    "status": row.get("Статус", "Прийнято"),
+                    "status": row.get("Статус", ORDER_INITIAL_STATUS),
                     "items": str(row.get("Речі", "")),
                     "date": str(row.get("Дата", "")),
                     "price": format_price(row.get("Сума", "")),
@@ -295,7 +291,7 @@ async def get_cabinet(user_id: Optional[int] = None, tg_user: dict = Depends(req
             if order_tg_id == user_str_id:
                 client_orders.append({
                     "id": str(row.get("Номер заявки", "")),
-                    "status": row.get("Статус", "⏳ Очікує огляду"),
+                    "status": row.get("Статус", ATELIER_INITIAL_STATUS),
                     "items": str(row.get("Опис", "")),
                     "date": str(row.get("Дата", "")),
                     "price": "Після огляду",
@@ -317,7 +313,7 @@ async def update_cabinet(profile: ClientProfile, tg_user: dict = Depends(require
     try:
         profile.telegram_id = tg_user["id"]
         user_str_id = str(profile.telegram_id)
-        all_clients = sheet_clients.get_all_records()
+        all_clients = sheet_clients.get_all_records(numericise_ignore=["all"])
         
         row_index = None
         for i, row in enumerate(all_clients, start=2):  
@@ -342,6 +338,47 @@ async def update_cabinet(profile: ClientProfile, tg_user: dict = Depends(require
         raise HTTPException(status_code=500, detail=str(e))
 
 
+# --- Єдині статуси (ті самі, що в боті PralnyaVdoma.py) ---
+ORDER_INITIAL_STATUS = "Очікує"        # Лист1: Очікує → 🧺 В роботі → 🚚 Доставляється → ✅ Виконано / ❌ Скасовано
+ATELIER_INITIAL_STATUS = "Нова"        # Atelier: Нова → В роботі → Готово / Скасовано
+B2B_INITIAL_STATUS = "Нова заявка"     # B2B_General: Нова заявка → В процесі переговорів → Погоджено / Відхилено
+
+
+def make_number(prefix, now=None):
+    """Номер заявки: префікс + час + 3 випадкові символи (два замовлення в одну секунду не збігаються)."""
+    now = now or datetime.now()
+    return f"{prefix}-{int(now.timestamp())}{uuid.uuid4().hex[:3].upper()}"
+
+
+def esc(value):
+    """Екранування для повідомлень Telegram з parse_mode=HTML: символ < в імені чи коментарі не зламає відправку."""
+    return html.escape(str(value or ""), quote=False)
+
+
+# Захист від подвійного натискання «Оформити»: однаковий кошик від того самого клієнта за 60 с
+_recent_orders = {}
+DUPLICATE_WINDOW = 60
+
+
+def is_duplicate_request(telegram_id, priced_items):
+    key = (str(telegram_id), tuple(sorted((i["id"], i["quantity"]) for i in priced_items)))
+    now = time.time()
+    for k, ts in list(_recent_orders.items()):
+        if now - ts > DUPLICATE_WINDOW:
+            _recent_orders.pop(k, None)
+    if key in _recent_orders:
+        return True
+    _recent_orders[key] = now
+    return False
+
+
+def invalidate_cache(*keys):
+    """Після запису в таблицю скидаємо кеш, щоб кабінет одразу показав нове замовлення."""
+    for k in keys:
+        if k in cache_storage:
+            cache_storage[k]["data"] = None
+
+
 # --- 3. POST: Создание заказа (Прачечная / Ателье) ---
 @app.post("/api/orders")  # Check your endpoint name (/api/order or /api/orders)
 @app.post("/api/order")
@@ -353,12 +390,34 @@ async def create_order(order: OrderData, tg_user: dict = Depends(require_tg_user
         order.username = f"@{tg_user['username']}" if tg_user.get("username") else ""
         # Ціни — лише з серверного каталогу (services.js), суми з браузера ігноруються
         priced_items, catalog_total = price_cart(order.items)
+        if is_duplicate_request(order.telegram_id, priced_items):
+            raise HTTPException(status_code=409, detail="Це замовлення вже прийнято")
+
+        # Змішаний кошик ділимо: послуги ательє — у лист Atelier, решта — у Лист1 (пральня).
+        # Раніше весь кошик з хоча б однією послугою ательє йшов в Atelier, і прання губилось.
+        atelier_items = [i for i in priced_items if i["section"] == "atelier"]
+        laundry_items = [i for i in priced_items if i["section"] != "atelier"]
+        order_ids = []
+        if atelier_items:
+            order_ids.append(await _create_atelier_order(order, atelier_items))
+        if laundry_items:
+            order_ids.append(await _create_laundry_order(order, laundry_items))
+        invalidate_cache("orders", "orders_loyalty", "atelier", "clients")
+        return {"status": "success", "order_id": ", ".join(order_ids), "order_ids": order_ids}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        print("❌ Ошибка при создании заказа:")
+        print(traceback.format_exc())
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+async def _create_atelier_order(order, priced_items):
         now = datetime.now()
         date_str = now.strftime("%Y-%m-%d %H:%M")
-
-        # === РАЗВИЛКА: ЕСЛИ ЭТО АТЕЛЬЕ ===
-        if order.service == "atelier":
-            order_id = f"ATL-{int(now.timestamp())}"
+        if True:
+            order_id = make_number("ATL", now)
             item_names = []
             
             # 1. Создаем переменную для подсчета общей суммы
@@ -388,9 +447,9 @@ async def create_order(order: OrderData, tg_user: dict = Depends(require_tg_user
                 order.username or "",     # 4-я: Username
                 items_text,               # 5-я: Послуги (Названия)
                 "",                       # 6-я: Фото
-                "⏳ Очікує огляду",        # 7-я: Статус
+                ATELIER_INITIAL_STATUS,   # 7-я: Статус
                 "",                       # 8-я: Комментарий/Колонка
-                "",                       # 9-я: Останній повідомлений статус
+                ATELIER_INITIAL_STATUS,   # 9-я: Останній повідомлений статус (клієнт уже отримав підтвердження)
                 order_id,                 # 10-я: Номер заявки
                 formatted_price           # 11-я: СУМА
             ]
@@ -415,24 +474,25 @@ async def create_order(order: OrderData, tg_user: dict = Depends(require_tg_user
             admin_text = (
                 f"✂️ <b>НОВА ЗАЯВКА (Ательє)</b> ✂️\n\n"
                 f"<b>Номер:</b> {order_id}\n"
-                f"<b>Клієнт:</b> {order.name}\n"
-                f"<b>Телефон:</b> {order.phone}\n"
-                f"<b>Адреса:</b> {order.address}\n"
+                f"<b>Клієнт:</b> {esc(order.name)}\n"
+                f"<b>Телефон:</b> {esc(order.phone)}\n"
+                f"<b>Адреса:</b> {esc(order.address)}\n"
                 f"<b>Послуги:</b>\n{items_text}\n"
                 f"<b>Орієнтовна сума:</b> {formatted_price}\n"
-                f"<b>Коментар:</b> {order.comment or 'Немає'}"
+                f"<b>Коментар:</b> {esc(order.comment) or 'Немає'}"
             )
             # Отправляем в админский чат
             send_tg_message(ADMIN_CHAT_ID, admin_text)
             
             # ====================================================
 
-            return {
-                "status": "success",
-                "order_id": order_id
-            }
- # === ИНАЧЕ: ЭТО СТАНДАРТНЫЙ ЗАКАЗ (ПРАЧЕЧНАЯ) ===
-        else:
+            return order_id
+
+
+async def _create_laundry_order(order, priced_items):
+        now = datetime.now()
+        catalog_total = sum(i["price"] * i["quantity"] for i in priced_items)
+        if True:
             # 1. Красиво форматируем вещи с учетом количества
             item_names = [
                 f"{item['name']} ({item['quantity']} шт)" if item["quantity"] > 1 else item["name"]
@@ -447,6 +507,8 @@ async def create_order(order: OrderData, tg_user: dict = Depends(require_tg_user
                 parse_price_value(row.get("Сума", ""))
                 for row in all_orders_for_loyalty
                 if str(row.get("telegram_id", "")) == str(order.telegram_id)
+                and "Скасовано" not in str(row.get("Статус", ""))
+                and not str(row.get("Скасування", "")).strip()
             )
             loyalty_discount = get_loyalty_discount(prev_total_spent)
             price_before_discount = total_price
@@ -454,7 +516,7 @@ async def create_order(order: OrderData, tg_user: dict = Depends(require_tg_user
                 total_price = round(total_price * (1 - loyalty_discount / 100))
 
             # 2. Генерируем ID для прачечной
-            order_id = f"ORD-{int(now.timestamp())}"
+            order_id = make_number("ORD", now)
             
             # 3. Собираем массив строк для Прачечной
             new_row = [
@@ -466,12 +528,12 @@ async def create_order(order: OrderData, tg_user: dict = Depends(require_tg_user
                 order.comment,
                 "",
                 "",
-                "Прийнято",
+                ORDER_INITIAL_STATUS,     # I Статус (як у боті)
                 "",
                 total_price,
                 "",
                 order_id,
-                "",
+                ORDER_INITIAL_STATUS,     # N Останній повідомлений статус — клієнт уже отримав підтвердження
                 "",
                 str(order.telegram_id)
             ]
@@ -498,26 +560,19 @@ async def create_order(order: OrderData, tg_user: dict = Depends(require_tg_user
             admin_text = (
                 f"🫧 <b>НОВЕ ЗАМОВЛЕННЯ (Пральня)</b> 🫧\n\n"
                 f"<b>Номер:</b> {order_id}\n"
-                f"<b>Клієнт:</b> {order.name}\n"
-                f"<b>Телефон:</b> {order.phone}\n"
-                f"<b>Квартира:</b> {order.address}\n"
+                f"<b>Клієнт:</b> {esc(order.name)}\n"
+                f"<b>Телефон:</b> {esc(order.phone)}\n"
+                f"<b>Квартира:</b> {esc(order.address)}\n"
                 f"<b>Речі:</b> {items_str}\n"
                 f"{discount_line}"
                 f"<b>Сума:</b> {int(total_price)} ₴\n"
-                f"<b>Коментар:</b> {order.comment or 'Немає'}"
+                f"<b>Коментар:</b> {esc(order.comment) or 'Немає'}"
             )
             send_tg_message(ADMIN_CHAT_ID, admin_text)
             
             # ====================================================
 
-            return {"status": "success", "order_id": order_id}
-
-    except HTTPException:
-        raise
-    except Exception as e:
-        print("❌ Ошибка при создании заказа:")
-        print(traceback.format_exc())
-        raise HTTPException(status_code=500, detail=str(e))
+            return order_id
 
 # Кэш в памяти для Google Таблиц (время жизни — 60 секунд по умолчанию)
 cache_storage = {
@@ -535,7 +590,9 @@ def get_cached_records(sheet, cache_key, ttl=None):
     effective_ttl = CACHE_TTL if ttl is None else ttl
     # Если кэш пустой или устарел — делаем реальный запрос к Google Таблице
     if cache_storage[cache_key]["data"] is None or now > cache_storage[cache_key]["expires"]:
-        cache_storage[cache_key]["data"] = sheet.get_all_records()
+        # numericise_ignore=["all"]: gspread інакше перетворює "720,00" на 72000
+        # (через це раніше був костиль «ділити суми ≥10000 на 100»)
+        cache_storage[cache_key]["data"] = sheet.get_all_records(numericise_ignore=["all"])
         cache_storage[cache_key]["expires"] = now + effective_ttl
     return cache_storage[cache_key]["data"]
 
@@ -550,7 +607,7 @@ async def create_b2b_request(data: B2BData, tg_user: dict = Depends(require_tg_u
         date_str = now.strftime("%Y-%m-%d %H:%M")
         
         # Генерируем простой номер заявки (например: B2B-26081540 — дата и время)
-        order_number = f"B2B-{now.strftime('%d%m%H%M')}"
+        order_number = make_number("B2B", now)
 
         # Формируем строку из 12 элементов строго под новую единую структуру
         new_row = [
@@ -563,20 +620,21 @@ async def create_b2b_request(data: B2BData, tg_user: dict = Depends(require_tg_u
             "",                                 # 7. Фото (в B2B форме Mini App его нет)
             str(data.telegram_id or ""),        # 8. Telegram ID
             username,                           # 9. Username (если передается в B2BData)
-            "Нова заявка",                      # 10. Статус
+            B2B_INITIAL_STATUS,                 # 10. Статус
             "",                                 # 11. Коментар адміна (пусто)
-            ""                                  # 12. Останній повідомлений статус (пусто)
+            B2B_INITIAL_STATUS                  # 12. Останній повідомлений статус — клієнт уже отримав підтвердження
         ]
 
         # Записываем на наш единый лист (убедитесь, что sheet_b2b указывает на B2B_General)
         sheet_B2B_General.append_row(new_row)
         print(f"✅ B2B заявка №{order_number} від {data.company} успішно збережена!")
+        invalidate_cache("clients")
 
         # 1. Повідомлення клієнту в Телеграм
         client_text = (
             f"🤝 <b>Дякуємо за запит на співпрацю!</b>\n"
             f"<b>Номер заявки:</b> #{order_number}\n\n"
-            f"<b>Компанія:</b> {data.company}\n"
+            f"<b>Компанія:</b> {esc(data.company)}\n"
             f"Наш менеджер зв'яжеться з вами найближчим часом для обговорення індивідуальних умов."
         )
         if data.telegram_id:
@@ -585,9 +643,9 @@ async def create_b2b_request(data: B2BData, tg_user: dict = Depends(require_tg_u
         # 2. Повідомлення адміністратору (в адмінський чат)
         admin_text = (
             f"💼 <b>НОВА B2B ЗАЯВКА (Mini App) №{order_number}</b> 💼\n\n"
-            f"<b>Компанія:</b> {data.company}\n"
-            f"<b>Телефон:</b> {data.phone}\n"
-            f"<b>Деталі:</b> {data.details or 'Не вказано'}\n"
+            f"<b>Компанія:</b> {esc(data.company)}\n"
+            f"<b>Телефон:</b> {esc(data.phone)}\n"
+            f"<b>Деталі:</b> {esc(data.details) or 'Не вказано'}\n"
             f"<b>Telegram ID:</b> {data.telegram_id or 'Невідомо'}"
         )
         send_tg_message(ADMIN_CHAT_ID, admin_text)
@@ -600,49 +658,28 @@ async def create_b2b_request(data: B2BData, tg_user: dict = Depends(require_tg_u
 
 def parse_price_value(val) -> float:
     """
-    Повертає число з суми в будь-якому форматі, в якому вона записана в таблиці
-    (200, '200 грн', '200,00', копійки тощо). Некоректне/порожнє значення -> 0.
-    Використовується для підрахунку витрат клієнта (Pralnya Club).
+    Сума з таблиці в будь-якому вигляді: 1200, "720,00", "1 910,00", "450 ₴", "1.910,50" -> float.
+    Некоректне/порожнє значення -> 0. Використовується для витрат клієнта (Pralnya Club).
     """
-    if not val:
-        return 0.0
-    clean_str = str(val).replace('\xa0', '').replace(' ', '').strip()
-    clean_str = clean_str.replace(',', '.')
-    clean_str = clean_str.replace('грн', '').replace('₴', '').strip()
+    text = str(val or "").replace("\xa0", "").replace(" ", "")
+    text = re.sub(r"[^0-9,.\-]", "", text).replace(",", ".")
+    if text.count(".") > 1:
+        head, _, tail = text.rpartition(".")
+        text = head.replace(".", "") + "." + tail
     try:
-        num = float(clean_str)
-        if num >= 10000 and num % 100 == 0:
-            num = num / 100
-        return num
+        return float(text) if text else 0.0
     except ValueError:
         return 0.0
 
 
 def format_price(val):
-    if not val:
+    """Сума для показу клієнту: «1910 грн»."""
+    if val in (None, ""):
         return "0 грн"
-    
-    # 1. Очищаем строку от неразрывных пробелов и меняем запятые на точки
-    clean_str = str(val).replace('\xa0', '').replace(' ', '').strip()
-    clean_str = clean_str.replace(',', '.')
-    clean_str = clean_str.replace('грн', '').replace('₴', '').strip()
-    
-    try:
-        num = float(clean_str)
-        
-        # 2. Если сумма гигантская и круглая (например, 35000.0), 
-        # значит она пришла в копейках. Переводим в гривны:
-        if num >= 10000 and num % 100 == 0:
-            num = num / 100
-            
-        # 3. САМОЕ ВАЖНОЕ: Оборачиваем в int(), чтобы отсечь нули после точки.
-        # Теперь вместо "350.00" мы отдаем строго "350 грн".
-        # JS на фронтенде больше не сможет "склеить" нули!
-        return f"{int(num)} грн"
-    
-    except ValueError:
-        # Если пришел совсем странный текст, который нельзя превратить в число
-        return str(val) if "грн" in str(val) else f"{val} грн"
+    num = parse_price_value(val)
+    if num == 0 and not re.search(r"\d", str(val)):
+        return str(val)
+    return f"{int(round(num))} грн"
 
 
 
