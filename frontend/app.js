@@ -783,7 +783,8 @@ if (confirmOrderBtn) {
         if (!requireTelegramUser()) return;
 
         // === 3. Определяем тип услуги (Ателье или Прачечная) ===
-        const isAtelier = state.cart.some(item => item.service === 'atelier');
+        // Сервер сам розділяє кошик на пральню й ательє; поле service лишилось для сумісності
+        const isAtelier = state.cart.every(item => item.service === 'atelier');
         const orderService = isAtelier ? 'atelier' : 'laundry';
 
         // Блокируем кнопку на время отправки
@@ -816,13 +817,16 @@ if (confirmOrderBtn) {
             if (response.ok) {
                 if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred("success");
                 
-                Telegram.WebApp.showAlert(`Успіх! Замовлення оформлено.`, function() {
+                const ids = (result.order_ids || [result.order_id]).filter(Boolean).join(", ");
+                Telegram.WebApp.showAlert(`Замовлення оформлено${ids ? ": " + ids : ""}.`, function() {
                     state.cart = []; // Очищаем корзину
                     updateCartUI();  // Обновляем счетчики
                     showPage("home"); // Возвращаем на главный экран
                 });
+            } else if (response.status === 409) {
+                Telegram.WebApp.showAlert("Це замовлення вже прийнято, повторно надсилати не потрібно.");
             } else {
-                Telegram.WebApp.showAlert("Помилка при створенні замовлення.");
+                Telegram.WebApp.showAlert(result?.detail ? `Помилка: ${result.detail}` : "Помилка при створенні замовлення.");
             }
 
         } catch (err) {
@@ -1269,14 +1273,17 @@ function renderOrdersList(orders) {
         let dotAnim = "";
         const statusText = order.status || "Прийнято";
 
-        if (statusText.includes("Готово") || statusText.includes("Видано")) {
+        if (statusText.includes("Виконано") || statusText.includes("Готово") || statusText.includes("Видано")) {
             statusBg = "bg-emerald-50 text-emerald-700 border-emerald-200/50";
             dotColor = "bg-emerald-500"; // Зеленая точка (без пульсации, так как завершено)
         } else if (statusText.includes("пранн") || statusText.includes("робот")) {
             statusBg = "bg-blue-50 text-blue-700 border-blue-200/50";
             dotColor = "bg-blue-500";
             dotAnim = "animate-pulse"; // Пульсирующая синяя точка
-        } else if (statusText.includes("огляд") || statusText.includes("Узгодження")) {
+        } else if (statusText.includes("Скасовано")) {
+            statusBg = "bg-red-50 text-red-700 border-red-200/50";
+            dotColor = "bg-red-500";
+        } else if (statusText.includes("огляд") || statusText.includes("Узгодження") || statusText.includes("Очікує") || statusText.includes("Нова")) {
             statusBg = "bg-amber-50 text-amber-700 border-amber-200/50";
             dotColor = "bg-amber-500";
             dotAnim = "animate-pulse"; // Пульсирующая оранжевая точка
