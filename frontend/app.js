@@ -1182,7 +1182,8 @@ if (aiInput) {
 // Обработка клика по быстрым чипсам-вопросам
 document.querySelectorAll(".ai-chip").forEach(btn => {
     btn.addEventListener("click", () => {
-        const text = btn.innerText.replace(/^[^\s]+\s/, ''); // удаляем эмодзи с начала
+        // Текст кнопки без іконок/емодзі на початку (раніше регулярка зрізала перше слово)
+        const text = (btn.dataset.question || btn.textContent).trim().replace(/^[^\p{L}\d]+/u, '');
         sendAiMessage(text);
     });
 });
