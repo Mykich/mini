@@ -6,7 +6,7 @@
 
     <meta
         name="viewport"
-        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
     >
 
     <title>Pralnya Vdoma</title>
@@ -14,15 +14,23 @@
     <!-- Telegram Mini App -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
+    <!-- Шрифти сайту: Cormorant Garamond (заголовки) + Manrope (текст) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
     <!-- Tailwind -->
     <script src="https://cdn.tailwindcss.com"></script>
 
+    <!-- Тема в стилі сайту (кольори, шрифти, тіні) — після Tailwind -->
+    <script src="theme.js?v=2026-11-27"></script>
+
     <!-- Наш CSS -->
-    <link rel="stylesheet" href="style.css?=v=3">
+    <link rel="stylesheet" href="style.css?v=2026-11-27">
 
 </head>
 
-<body class="bg-gray-100">
+<body class="bg-gray-50">
 
 <div id="app" class="min-h-screen pb-24">
 
@@ -51,7 +59,7 @@
             </div>
 
             <!-- Іконка кошика (Soft UI) -->
-            <button class="w-11 h-11 rounded-[16px] bg-indigo-50 flex items-center justify-center text-indigo-600 transition-transform active:scale-[0.95] ring-1 ring-indigo-100/50 shadow-[0_4px_12px_-4px_rgba(79,70,229,0.12)]">
+            <button class="w-11 h-11 rounded-[16px] bg-indigo-50 flex items-center justify-center text-indigo-600 transition-transform active:scale-[0.95] ring-1 ring-indigo-100/50 shadow-[0_4px_12px_-4px_rgba(31,42,51,0.10)]">
                 <!-- SVG Кошик -->
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path>
@@ -622,7 +630,7 @@ shadow-xl">
     </div>
 
     <!-- 3. Карточка программы лояльности (Премиум Glassmorphism) -->
-    <div class="relative overflow-hidden rounded-[28px] bg-gradient-to-br from-blue-600 via-indigo-600 to-blue-700 p-6 text-white shadow-[0_16px_36px_-10px_rgba(37,99,235,0.35)] transition-all active:scale-[0.99] mb-6">
+    <div class="relative overflow-hidden rounded-[28px] bg-gradient-to-br from-blue-600 via-indigo-600 to-blue-700 p-6 text-white shadow-[0_16px_36px_-10px_rgba(31,42,51,0.35)] transition-all active:scale-[0.99] mb-6">
         <!-- Декоративные фоновые блики -->
         <div class="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-white/10 blur-2xl"></div>
         <div class="pointer-events-none absolute -bottom-10 -left-10 h-32 w-32 rounded-full bg-blue-400/20 blur-xl"></div>
@@ -802,7 +810,7 @@ shadow-xl">
     </section>
 
     <!-- Кнопка підтвердження -->
-    <button id="confirm-order-btn" class="w-full bg-blue-600 text-white font-bold rounded-[16px] py-4 shadow-[0_8px_20px_rgba(37,99,235,0.2)] hover:bg-blue-700 transition">
+    <button id="confirm-order-btn" class="w-full bg-blue-600 text-white font-bold rounded-[16px] py-4 shadow-[0_8px_20px_rgba(31,42,51,0.2)] hover:bg-blue-700 transition">
         Підтвердити замовлення
     </button>
 </main>
@@ -891,7 +899,7 @@ shadow-xl">
     <div class="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-6"></div>
     <h3 class="text-xl font-bold mb-4">📍 Ваша адреса</h3>
     <input type="text" id="address-input" placeholder="Вулиця, будинок, квартира" class="w-full bg-gray-50 border border-gray-200 rounded-[16px] p-4 outline-none focus:border-blue-500 transition-colors mb-4 text-[15px]">
-    <button id="save-address-btn" class="w-full bg-blue-600 text-white font-bold rounded-[16px] py-4 shadow-[0_8px_20px_rgba(37,99,235,0.2)] hover:bg-blue-700 transition">
+    <button id="save-address-btn" class="w-full bg-blue-600 text-white font-bold rounded-[16px] py-4 shadow-[0_8px_20px_rgba(31,42,51,0.2)] hover:bg-blue-700 transition">
         Зберегти адресу
     </button>
 </div>
