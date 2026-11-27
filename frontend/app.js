@@ -1123,6 +1123,7 @@ async function sendAiMessage(textToSend = null) {
 
         if (response.ok && data.reply) {
             appendMessage(data.reply, 'ai');
+            appendAiActions(data.actions);
             if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
         } else {
             appendMessage("Вибачте, сталася помилка. Спробуйте ще раз пізніше.", 'ai');
@@ -1136,6 +1137,36 @@ async function sendAiMessage(textToSend = null) {
 }
 
 // Вспомогательная функция отрисовки пупырок
+// Кнопки під відповіддю асистента (не більше двох, лише коли асистент вважає їх доречними)
+const AI_ACTIONS = {
+    order:   { label: "Здати речі", go: () => showPage("order") },
+    atelier: { label: "Ательє", go: () => showPage("atelier") },
+    cabinet: { label: "Кабінет", go: () => switchTab("cabinet") },
+};
+
+function appendAiActions(actions) {
+    if (!aiMessages || !Array.isArray(actions) || !actions.length) return;
+    const row = document.createElement("div");
+    row.className = "flex gap-2 self-start animate-fade-in";
+    actions.slice(0, 2).forEach(key => {
+        const action = AI_ACTIONS[key];
+        if (!action) return;
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "ai-action bg-white text-blue-600 text-xs font-semibold px-4 py-2 rounded-[14px] border border-gray-200 shadow-sm active:scale-95 transition";
+        btn.textContent = action.label;
+        btn.addEventListener("click", () => {
+            action.go();
+            if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred("light");
+        });
+        row.appendChild(btn);
+    });
+    if (row.children.length) {
+        aiMessages.appendChild(row);
+        aiMessages.scrollTop = aiMessages.scrollHeight;
+    }
+}
+
 function appendMessage(text, sender) {
     if (!aiMessages) return;
 
