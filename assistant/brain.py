@@ -11,6 +11,8 @@ AI-асистент Pralnya Vdoma — один «мозок» для бота і
   * Ліміти повідомлень на клієнта і на добу — захист від накрутки рахунку за API.
   * Пам'ять розмови: останні повідомлення клієнта (в пам'яті процесу, забуваються через 2 год тиші
     або при перезапуску сервісу).
+  * «Де моє замовлення?» — інструмент get_my_orders (api.py дає лише замовлення цього клієнта з таблиці).
+  * Кнопки під відповіддю — мітки [[BTN:...]], не більше двох, лише дозволені для каналу.
   * Передача адміністратору: коли потрібна людина, модель ставить мітку [[ADMIN]];
     api.py надсилає розмову в ADMIN_CHAT_ID з командою /reply_<id> (як у «Зв’язатися через бота»).
 
@@ -58,6 +60,15 @@ FALLBACK_LIMIT = (
 )
 
 # Як підказати наступний крок — кнопки різні в боті й у застосунку
+# Кнопки, які вміє показати кожен канал: мітка [[BTN:<ключ>]] -> опис для моделі
+CHANNEL_BUTTONS = {
+    "bot": {"order": "оформити замовлення", "price": "відкрити прайс", "atelier": "заявка в ательє",
+            "contact": "написати адміністратору"},
+    "miniapp": {"order": "оформити замовлення", "atelier": "заявка в ательє", "cabinet": "кабінет і замовлення"},
+}
+BUTTON_RE = re.compile(r"\[\[\s*BTN\s*:\s*([a-z_]+)\s*\]\]", re.I)
+MAX_BUTTONS = 2
+
 CHANNEL_HINTS = {
     "bot": (
         "Клієнт пише в Telegram-боті. Кнопки меню бота: «Здати речі» (оформити замовлення), «Прайс», "
@@ -87,7 +98,8 @@ RULES = """Ти — консультант пральні та ательє «Pr
 - Можна порахувати орієнтовну суму кількох речей за прайсом (наприклад, 3 сорочки × 250 ₴ = 750 ₴) — з приміткою, що це орієнтир.
 - Знижку Pralnya Club не застосовуй сам до розрахунку: вона нараховується автоматично, свій рівень клієнт бачить у кабінеті.
 - Ти бачиш попередні повідомлення цієї розмови — враховуй їх (наприклад, «а скільки це коштує?» стосується попередньої речі).
-- Ти не бачиш замовлень, оплат і даних клієнта. На «де моє замовлення?» підкажи, де подивитися статус.
+- Про замовлення клієнта, їх статус, суму чи його знижку Pralnya Club — виклич інструмент get_my_orders (він повертає лише замовлення цього клієнта). Назви номер, дату і статус своїми словами. Не вигадуй статуси й терміни. Якщо замовлень немає — так і скажи і запропонуй оформити. Якщо інструмент недоступний або повернув помилку — підкажи, де подивитися статус.
+- Статуси замовлень пральні: «Очікує» — заявку прийнято, чекаємо речі або забір; «🧺 В роботі» — речі обробляються; «🚚 Доставляється» — вже везуть клієнту; «✅ Виконано»; «❌ Скасовано». Ательє: «Нова», «В роботі», «Готово», «Скасовано».
 
 МЕЖІ
 - Відповідай лише на питання про послуги Pralnya Vdoma та догляд за одягом і текстилем. На сторонні теми чемно відмов одним реченням і запропонуй допомогу з пральнею.
@@ -107,7 +119,10 @@ RULES = """Ти — консультант пральні та ательє «Pr
 - Для звичайних питань, на які є відповідь у базі, мітку НЕ став.
 
 НАСТУПНИЙ КРОК
-- Якщо доречно — один ненав'язливий наступний крок: оформити замовлення, переглянути прайс, звернутися в ательє або до адміністратора."""
+- Якщо доречно — один ненав'язливий наступний крок: оформити замовлення, переглянути прайс, звернутися в ательє або до адміністратора.
+
+КНОПКИ
+- У самому кінці відповіді можеш додати 1–2 службові мітки кнопок (список дозволених — нижче), але ЛИШЕ коли клієнт явно готовий до цього кроку (наприклад, питає, як оформити, або хоче здати речі). На звичайні інформаційні питання кнопок не додавай. Не пиши в тексті, що «нижче кнопка»."""
 
 
 # ---------- База знань ----------
@@ -185,6 +200,8 @@ def build_system_prompt(price_data: dict, channel: str, now: Optional[datetime] 
         RULES,
         today,
         CHANNEL_HINTS.get(channel, CHANNEL_HINTS["bot"]),
+        "Дозволені мітки кнопок: " + ", ".join(
+            f"[[BTN:{k}]] — {v}" for k, v in CHANNEL_BUTTONS.get(channel, CHANNEL_BUTTONS["bot"]).items()),
         "==================== БАЗА ЗНАНЬ ====================",
         load_knowledge_files(),
         price_knowledge(price_data),
@@ -262,8 +279,19 @@ def _get_client():
     return _client
 
 
-async def _call_model(system_prompt: str, turns: list) -> str:
-    """turns — [(role, text), ...], role = "user" | "model"; останній — нове повідомлення клієнта."""
+ORDERS_TOOL_NAME = "get_my_orders"
+
+
+async def _generate(model: str, contents: list, config):
+    """Один запит до Gemini (окрема функція, щоб у тестах її можна було підмінити)."""
+    return await _get_client().aio.models.generate_content(model=model, contents=contents, config=config)
+
+
+async def _call_model(system_prompt: str, turns: list, tool_runner=None) -> str:
+    """
+    turns — [(role, text), ...], role = "user" | "model"; останній — нове повідомлення клієнта.
+    tool_runner(name, args) -> dict — виконує інструмент (get_my_orders); None — без інструментів.
+    """
     from google.genai import types
 
     model = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
@@ -271,13 +299,33 @@ async def _call_model(system_prompt: str, turns: list) -> str:
     if model.startswith("gemini-2.5-flash"):
         # Без «роздумів»: швидше, дешевше, і роздуми не з'їдають ліміт довжини відповіді
         config["thinking_config"] = types.ThinkingConfig(thinking_budget=0)
+    if tool_runner:
+        config["tools"] = [types.Tool(function_declarations=[types.FunctionDeclaration(
+            name=ORDERS_TOOL_NAME,
+            description=("Повертає останні замовлення ЦЬОГО клієнта (пральня та ательє: номер, дата, статус, речі, сума) "
+                         "і його рівень знижки Pralnya Club. Викликай, коли клієнт питає про своє замовлення, "
+                         "його статус, суму чи свою знижку."),
+        )])]
+        config["automatic_function_calling"] = types.AutomaticFunctionCallingConfig(disable=True)
+    cfg = types.GenerateContentConfig(**config)
     contents = [types.Content(role=role, parts=[types.Part(text=text)]) for role, text in turns]
-    response = await _get_client().aio.models.generate_content(
-        model=model,
-        contents=contents,
-        config=types.GenerateContentConfig(**config),
-    )
-    return response.text or ""
+
+    for _ in range(3):  # не більше двох викликів інструмента поспіль
+        response = await _generate(model, contents, cfg)
+        calls = response.function_calls or []
+        if not calls or not tool_runner:
+            return response.text or ""
+        contents.append(response.candidates[0].content)
+        parts = []
+        for call in calls:
+            try:
+                result = await tool_runner(call.name, dict(call.args or {}))
+            except Exception as e:
+                logging.warning("AI інструмент %s: %s", call.name, e)
+                result = {"error": "дані тимчасово недоступні"}
+            parts.append(types.Part.from_function_response(name=call.name, response=result))
+        contents.append(types.Content(role="user", parts=parts))
+    return ""
 
 
 # ---------- Пам'ять розмови ----------
@@ -341,10 +389,22 @@ class Reply:
     text: str
     handoff: bool = False                       # модель просить передати розмову людині
     dialog: list = field(default_factory=list)  # розмова для адміністратора [(role, text)]
+    actions: list = field(default_factory=list)  # кнопки під відповіддю: ["order", "price", ...]
+
+
+def extract_buttons(text: str, channel: str) -> tuple:
+    """Прибирає мітки [[BTN:...]] з тексту; повертає (текст, дозволені кнопки без повторів, максимум 2)."""
+    allowed = CHANNEL_BUTTONS.get(channel, {})
+    actions = []
+    for key in BUTTON_RE.findall(text or ""):
+        key = key.lower()
+        if key in allowed and key not in actions:
+            actions.append(key)
+    return BUTTON_RE.sub("", text or ""), actions[:MAX_BUTTONS]
 
 
 async def answer(message: str, user_key: str, channel: str, price_data: dict,
-                 retries: int = 1, timeout: float = 25) -> Reply:
+                 tool_runner=None, retries: int = 1, timeout: float = 25) -> Reply:
     """Відповідь для клієнта (ніколи не кидає виняток). user_key — id клієнта в Telegram."""
     message = (message or "").strip()[:MAX_MESSAGE_CHARS]
     if not message:
@@ -360,15 +420,16 @@ async def answer(message: str, user_key: str, channel: str, price_data: dict,
     turns = get_history(key) + [("user", message)]
     for attempt in range(retries + 1):
         try:
-            raw = await asyncio.wait_for(_call_model(system_prompt, turns), timeout=timeout)
+            raw = await asyncio.wait_for(_call_model(system_prompt, turns, tool_runner), timeout=timeout)
             handoff = bool(HANDOFF_RE.search(raw or ""))
-            text = clean_reply(HANDOFF_RE.sub("", raw or ""))
+            raw, actions = extract_buttons(HANDOFF_RE.sub("", raw or ""), channel)
+            text = clean_reply(raw)
             if not text and handoff:
                 text = "Дякую, що звернулися."
             if text:
                 remember(key, "user", message)
                 remember(key, "model", text)
-                return Reply(text, handoff, get_history(key))
+                return Reply(text, handoff, get_history(key), actions)
             raise ValueError("порожня відповідь моделі")
         except Exception as e:
             logging.warning("AI помилка (%s/%s): %s: %s", attempt + 1, retries + 1, type(e).__name__, e)

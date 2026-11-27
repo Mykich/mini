@@ -222,31 +222,105 @@ def notify_admin_handoff(tg_id, name: str, username: str, channel: str, dialog: 
         return False
 
 
-async def run_assistant(message: str, tg_id, name: str, username: str, channel: str) -> str:
-    """Відповідь асистента + передача адміністратору, якщо модель про це попросила."""
-    reply = await brain.answer(message, str(tg_id or "unknown"), channel, PRICE_DATA)
-    if not reply.handoff:
-        return reply.text
-    person = str(tg_id or "unknown")
+def orders_for_assistant(tg_id) -> dict:
+    """Відповідь інструмента get_my_orders: лише замовлення клієнта з цим telegram_id (останні 5)."""
+    if sheet_orders is None or sheet_clients is None or sheet_atelier is None:
+        return {"error": "таблиця замовлень зараз недоступна"}
+    data = collect_client_data(str(tg_id))
+    orders = [
+        {
+            "номер": o["id"],
+            "тип": "ательє" if o["type"] == "atelier" else "пральня",
+            "дата": o["date"],
+            "статус": str(o["status"]),
+            "речі": o["items"][:200],
+            "сума": o["price"],
+        }
+        for o in data["orders"][-5:]
+    ]
+    result = {
+        "замовлення": orders,
+        "знижка_pralnya_club_відсотків": data["client"]["discount"],
+        "сума_замовлень_грн": int(round(data["total_spent"])),
+    }
+    if not orders:
+        result["примітка"] = "У цього клієнта ще немає замовлень."
+    return result
+
+
+def make_orders_runner(tg_id):
+    """Інструменти асистента для конкретного клієнта (id з підпису Telegram або від бота)."""
+    async def runner(name: str, args: dict) -> dict:
+        if name != brain.ORDERS_TOOL_NAME:
+            return {"error": "невідомий інструмент"}
+        return await asyncio.to_thread(orders_for_assistant, tg_id)
+    return runner
+
+
+# --- Журнал запитань до AI-асистента (лист «AI_log») ---
+# Лист створює адміністратор вручну (заголовки: Дата | Канал | Telegram ID | Ім'я | Питання | Відповідь | Кнопки | Передано адміну).
+# Немає листа — журнал просто не пишеться; перевіряємо його появу раз на 10 хв.
+AI_LOG_SHEET = "AI_log"
+_ai_log = {"sheet": None, "checked": 0.0}
+
+
+def write_ai_log(channel: str, tg_id, name: str, question: str, answer: str, actions: list, handoff: str):
+    try:
+        if _ai_log["sheet"] is None:
+            if spreadsheet is None or time.time() - _ai_log["checked"] < 600:
+                return
+            _ai_log["checked"] = time.time()
+            try:
+                _ai_log["sheet"] = spreadsheet.worksheet(AI_LOG_SHEET)
+            except gspread.exceptions.WorksheetNotFound:
+                return
+        _ai_log["sheet"].append_row([
+            datetime.now().strftime("%Y-%m-%d %H:%M"),
+            "бот" if channel == "bot" else "Mini App",
+            str(tg_id or ""),
+            name or "",
+            question[:1000],
+            answer[:2000],
+            ", ".join(actions),
+            handoff,
+        ], value_input_option="RAW")
+    except Exception as e:
+        print(f"⚠️ AI_log не записано: {e}")
+
+
+async def run_assistant(message: str, tg_id, name: str, username: str, channel: str) -> dict:
+    """Відповідь асистента + передача адміністратору, якщо модель про це попросила, + запис у журнал."""
+    runner = None
     try:
         int(tg_id)
+        runner = make_orders_runner(tg_id)
     except (TypeError, ValueError):
-        return f"{reply.text}\n\n{brain.HANDOFF_FAILED}"
-    if not brain.handoff_due(person):
-        return f"{reply.text}\n\n{brain.HANDOFF_ALREADY}"
-    sent = await asyncio.to_thread(notify_admin_handoff, tg_id, name, username, channel, reply.dialog)
-    if not sent:
-        brain.handoff_failed(person)
-        return f"{reply.text}\n\n{brain.HANDOFF_FAILED}"
-    return f"{reply.text}\n\n{brain.HANDOFF_SENT}"
+        pass
+    reply = await brain.answer(message, str(tg_id or "unknown"), channel, PRICE_DATA, tool_runner=runner)
+    text, handoff = reply.text, ""
+    if reply.handoff:
+        person = str(tg_id or "unknown")
+        if runner is None:
+            text, handoff = f"{reply.text}\n\n{brain.HANDOFF_FAILED}", "ні (немає id)"
+        elif not brain.handoff_due(person):
+            text, handoff = f"{reply.text}\n\n{brain.HANDOFF_ALREADY}", "вже передано"
+        elif await asyncio.to_thread(notify_admin_handoff, tg_id, name, username, channel, reply.dialog):
+            text, handoff = f"{reply.text}\n\n{brain.HANDOFF_SENT}", "так"
+        else:
+            brain.handoff_failed(person)
+            text, handoff = f"{reply.text}\n\n{brain.HANDOFF_FAILED}", "не вдалося"
+    # журнал пишемо у фоні, щоб клієнт не чекав Google Sheets
+    asyncio.get_running_loop().run_in_executor(
+        None, write_ai_log, channel, tg_id, name, (message or "")[:1000], text, reply.actions, handoff)
+    return {"reply": text, "actions": reply.actions}
 
 
 @app.post("/api/ai")
 async def ai_chat(data: AIMessageData, tg_user: dict = Depends(require_tg_user)):
     """Асистент у Mini App. Клієнта визначаємо з підпису Telegram, а не з telegram_id у тілі запиту."""
     name = " ".join(x for x in (tg_user.get("first_name"), tg_user.get("last_name")) if x)
-    reply = await run_assistant(data.message, tg_user.get("id"), name, tg_user.get("username") or "", "miniapp")
-    return {"status": "success", "reply": reply}
+    result = await run_assistant(data.message, tg_user.get("id"), name, tg_user.get("username") or "", "miniapp")
+    return {"status": "success", **result}
 
 
 @app.post("/api/ai/bot")
@@ -255,8 +329,8 @@ async def ai_chat_bot(data: AIMessageData, x_bot_signature: Optional[str] = Head
     expected = bot_ai_signature()
     if not expected or not hmac.compare_digest(expected, x_bot_signature or ""):
         raise HTTPException(status_code=401, detail="unauthorized")
-    reply = await run_assistant(data.message, data.telegram_id, data.name or "", data.username or "", "bot")
-    return {"status": "success", "reply": reply}
+    result = await run_assistant(data.message, data.telegram_id, data.name or "", data.username or "", "bot")
+    return {"status": "success", **result}
 
 # --- 1. GET: Загрузка кабинета ---
 def get_loyalty_discount(total_spent: float) -> int:
@@ -273,69 +347,73 @@ def get_loyalty_discount(total_spent: float) -> int:
     return 0
 
 
+def collect_client_data(user_str_id: str) -> dict:
+    """Дані клієнта, його замовлення (пральня + ательє) і знижка Pralnya Club. Спільне для кабінету та AI-асистента."""
+    client_data = {"name": "", "phone": "", "apartment": "", "discount": 0}
+
+    # 1. Шукаємо дані клієнта (через кеш)
+    all_clients = get_cached_records(sheet_clients, "clients")
+    for row in all_clients:
+        if str(row.get("telegram_id", "")) == user_str_id:
+            client_data = {
+                "name": row.get("name", ""),
+                "phone": str(row.get("phone", "")),
+                "apartment": str(row.get("apartment", "")),
+                "discount": 0
+            }
+            break
+
+    client_orders = []
+    total_spent = 0.0
+
+    # 2. Збираємо замовлення ПРАЛЬНІ (через кеш)
+    all_orders = get_cached_records(sheet_orders, "orders")
+    for row in all_orders:
+        order_tg_id = str(row.get("telegram_id", ""))
+        order_phone = str(row.get("Телефон", ""))
+
+        if order_tg_id == user_str_id or (client_data["phone"] and order_phone == client_data["phone"]):
+            if "Скасовано" not in str(row.get("Статус", "")) and not str(row.get("Скасування", "")).strip():
+                total_spent += parse_price_value(row.get("Сума", ""))
+            client_orders.append({
+                "id": str(row.get("Номер замовлення", "")),
+                "status": row.get("Статус", ORDER_INITIAL_STATUS),
+                "items": str(row.get("Речі", "")),
+                "date": str(row.get("Дата", "")),
+                "price": format_price(row.get("Сума", "")),
+                "type": "laundry"
+            })
+
+    # 3. Збираємо заявки АТЕЛЬЄ (через кеш)
+    # Примітка: суму ательє свідомо НЕ додаємо до total_spent — вона орієнтовна
+    # до огляду майстром, тому клієнту показуємо "Після огляду", а не число.
+    all_atelier = get_cached_records(sheet_atelier, "atelier")
+    for row in all_atelier:
+        order_tg_id = str(row.get("Telegram ID", ""))
+
+        if order_tg_id == user_str_id:
+            client_orders.append({
+                "id": str(row.get("Номер заявки", "")),
+                "status": row.get("Статус", ATELIER_INITIAL_STATUS),
+                "items": str(row.get("Опис", "")),
+                "date": str(row.get("Дата", "")),
+                "price": "Після огляду",
+                "type": "atelier"
+            })
+
+    # 4. Знижка Pralnya Club — рахуємо від реальної суми витрат (пральня, без ательє)
+    client_data["discount"] = get_loyalty_discount(total_spent)
+    return {"client": client_data, "orders": client_orders, "total_spent": total_spent}
+
+
 @app.get("/api/cabinet")
 @retry_google_api(max_retries=3)
 async def get_cabinet(user_id: Optional[int] = None, tg_user: dict = Depends(require_tg_user)):
     try:
         # user_id з адреси більше не використовується: клієнта визначає підпис Telegram
-        user_str_id = str(tg_user["id"])
-        client_data = {"name": "", "phone": "", "apartment": "", "discount": 0}
-        
-        # 1. Ищем данные клиента (через кэш)
-        all_clients = get_cached_records(sheet_clients, "clients")
-        for row in all_clients:
-            if str(row.get("telegram_id", "")) == user_str_id:
-                client_data = {
-                    "name": row.get("name", ""),
-                    "phone": str(row.get("phone", "")),
-                    "apartment": str(row.get("apartment", "")),
-                    "discount": 0
-                }
-                break
-        
-        client_orders = []
-        total_spent = 0.0
-        
-        # 2. Собираем заказы ПРАЧЕЧНОЙ (через кэш)
-        all_orders = get_cached_records(sheet_orders, "orders")
-        for row in all_orders:
-            order_tg_id = str(row.get("telegram_id", "")) 
-            order_phone = str(row.get("Телефон", ""))
-            
-            if order_tg_id == user_str_id or (client_data["phone"] and order_phone == client_data["phone"]):
-                if "Скасовано" not in str(row.get("Статус", "")) and not str(row.get("Скасування", "")).strip():
-                    total_spent += parse_price_value(row.get("Сума", ""))
-                client_orders.append({
-                    "id": str(row.get("Номер замовлення", "")),
-                    "status": row.get("Статус", ORDER_INITIAL_STATUS),
-                    "items": str(row.get("Речі", "")),
-                    "date": str(row.get("Дата", "")),
-                    "price": format_price(row.get("Сума", "")),
-                    "type": "laundry"
-                })
-                
-        # 3. Собираем заявки АТЕЛЬЕ (через кэш)
-        # Примітка: суму ательє свідомо НЕ додаємо до total_spent — вона орієнтовна
-        # до огляду майстром, тому клієнту показуємо "Після огляду", а не число.
-        all_atelier = get_cached_records(sheet_atelier, "atelier")
-        for row in all_atelier:
-            order_tg_id = str(row.get("Telegram ID", ""))
-            
-            if order_tg_id == user_str_id:
-                client_orders.append({
-                    "id": str(row.get("Номер заявки", "")),
-                    "status": row.get("Статус", ATELIER_INITIAL_STATUS),
-                    "items": str(row.get("Опис", "")),
-                    "date": str(row.get("Дата", "")),
-                    "price": "Після огляду",
-                    "type": "atelier"
-                })
-        
-        # 4. Знижка Pralnya Club — рахуємо від реальної суми витрат (пральня, без ательє)
-        client_data["discount"] = get_loyalty_discount(total_spent)
+        data = collect_client_data(str(tg_user["id"]))
+        return {"client": data["client"], "orders": data["orders"]}
 
-        return {"client": client_data, "orders": client_orders}
-        
     except Exception as e:
         print(f"❌ Ошибка при получении данных: {e}")
         raise HTTPException(status_code=500, detail=str(e))
