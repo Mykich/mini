@@ -18,15 +18,17 @@ try:
     load_dotenv()
 except ImportError:
     pass
-from openai import AsyncOpenAI
 from fastapi.staticfiles import StaticFiles
 
-from fastapi import APIRouter, FastAPI, HTTPException, Body, Depends, Response
+from fastapi import APIRouter, FastAPI, HTTPException, Body, Depends, Header, Response
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import html
 import uuid
-from security import require_tg_user, price_cart, catalog_prompt_text, PRICE_DATA
+from security import require_tg_user, price_cart, PRICE_DATA
+from assistant import brain
+import hashlib
+import hmac
 from typing import Optional, Any
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
@@ -50,26 +52,12 @@ if not ADMIN_CHAT_ID:
     print("⚠️ ADMIN_CHAT_ID не знайдено в змінних середовища! Адмін не отримуватиме сповіщення.")
 
 # === АИ Асистент ===
-aclient = AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+# Один «мозок» для бота і Mini App: assistant/brain.py (Gemini + база знань assistant/knowledge + catalog/prices.json).
 
-SYSTEM_PROMPT = """Ти — преміальний AI-консультант елітної пральні та ательє "PralnyaVdoma" (Київ, вул. Бульварно-Кудрявська, 17-А).
 
-Стиль спілкування: Ввічливий консьєрж 5-зіркового готелю. 
-❗️ ГОЛОВНЕ ПРАВИЛО: Пиши максимально КРАТКО, ЛАКОНІЧНО і ПО СУТІ. Жодної «води», довгих вступів та розлогих описів. Тільки конструктивні відповіді в 1-3 речення, якщо це можливо. Форматуй текст красиво (використовуй емодзі та списки).
-
-Експертиза (використовуй точково, без зайвих деталей):
-1. Пуховики та зимовий одяг: дбайливий догляд за пухом, відновлення об'єму.
-2. Хімія: Преміальна гіпоалергенна хімія без різких запахів.
-3. Обладнання: Професійні машини IPSO та Danube.
-
-Прайс (орієнтовні ціни «від»; це той самий каталог, що бачить клієнт у застосунку):
-""" + catalog_prompt_text() + """
-Остаточна вартість погоджується після огляду речі. Складні речі (шкіра, замша, хутро, декор) — лише після огляду.
-
-Правила:
-- Не вигадуй невідомі ціни. Якщо послуги немає в прайсі — кажи, що треба спитати в менеджера.
-- Завжди спрямовуй клієнта на оформлення замовлення прямо в додатку."""
-
+def bot_ai_signature() -> str:
+    """Підпис запитів бота до /api/ai/bot. Бот і API знають той самий TELEGRAM_TOKEN, тож окремий секрет не потрібен."""
+    return hmac.new(TELEGRAM_TOKEN.encode(), b"pralnya-ai-bot", hashlib.sha256).hexdigest() if TELEGRAM_TOKEN else ""
 
 
 def send_tg_message(chat_id, text):
@@ -206,33 +194,20 @@ async def get_prices(response: Response):
 
 @app.post("/api/ai")
 async def ai_chat(data: AIMessageData, tg_user: dict = Depends(require_tg_user)):
-    try:
-        # Обмеження довжини: кожен запит до OpenAI платний
-        data.message = (data.message or "")[:1000]
-        # Проверяем, есть ли вообще ключ
-        if not os.getenv("OPENAI_API_KEY"):
-            return {"status": "success", "reply": "Вибачте, мій AI-модуль наразі налаштовується. Будь ласка, зверніться до менеджера або скористайтеся меню!"}
+    """Асистент у Mini App. Клієнта визначаємо з підпису Telegram, а не з telegram_id у тілі запиту."""
+    reply = await brain.answer(data.message, str(tg_user.get("id")), "miniapp", PRICE_DATA)
+    return {"status": "success", "reply": reply}
 
-        # Отправляем запрос в OpenAI
-        response = await aclient.chat.completions.create(
-            model="gpt-3.5-turbo", # Працює швидко і дешево, для консультанта ідеально
-            messages=[
-                {"role": "system", "content": SYSTEM_PROMPT},
-                {"role": "user", "content": data.message}
-            ],
-            temperature=0.7, # Трохи креативності, але без фантазій
-            max_tokens=250   # Обмежуємо довжину відповіді, щоб він був лаконічним
-        )
 
-        reply = response.choices[0].message.content
+@app.post("/api/ai/bot")
+async def ai_chat_bot(data: AIMessageData, x_bot_signature: Optional[str] = Header(default=None)):
+    """Асистент для Telegram-бота (бот пересилає сюди вільні запитання клієнтів)."""
+    expected = bot_ai_signature()
+    if not expected or not hmac.compare_digest(expected, x_bot_signature or ""):
+        raise HTTPException(status_code=401, detail="unauthorized")
+    reply = await brain.answer(data.message, str(data.telegram_id or "unknown"), "bot", PRICE_DATA)
+    return {"status": "success", "reply": reply}
 
-        return {"status": "success", "reply": reply}
-
-    except Exception as e:
-        print(f"❌ Помилка AI: {e}")
-        # Якщо сталася помилка на стороні OpenAI, віддаємо клієнту красиву заглушку
-        return {"status": "success", "reply": "Зараз я трохи перевантажений замовленнями 🧺. Будь ласка, зателефонуйте нашому менеджеру!"}
-    
 # --- 1. GET: Загрузка кабинета ---
 def get_loyalty_discount(total_spent: float) -> int:
     """

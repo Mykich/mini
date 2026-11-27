@@ -166,19 +166,3 @@ def price_cart(items, max_qty: int = 99):
         })
         total += product["price"] * qty
     return lines, total
-
-
-def catalog_prompt_text() -> str:
-    """Прайс для промпту ІІ, зібраний з того самого каталогу, що бачить клієнт."""
-    by_section = {}
-    for item in CATALOG.values():
-        by_section.setdefault(item["section"], []).append(item)
-    parts = []
-    for key, items in by_section.items():
-        title = SECTION_TITLES.get(key, key)
-        line = "; ".join(
-            f"{i['name']} — {int(i['price'])} ₴" + (f" за {i['unit']}" if i["unit"] != "шт" else "")
-            for i in items
-        )
-        parts.append(f"- {title}: {line}")
-    return "\n".join(parts)
