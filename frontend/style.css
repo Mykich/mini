@@ -351,3 +351,53 @@ select:focus{
     border-color:var(--pv-gold) !important;
     --tw-ring-color:rgba(138,109,75,.25) !important;
 }
+
+/* ---------- Лінійні іконки (замість емодзі), як на сайті ---------- */
+.pv-ic{
+    width:20px;
+    height:20px;
+    flex:none;
+    display:inline-block;
+    vertical-align:-4px;
+    fill:none;
+    stroke:currentColor;
+    stroke-width:1.6;
+    stroke-linecap:round;
+    stroke-linejoin:round;
+}
+.pv-ic--sm{ width:17px; height:17px; vertical-align:-3px; }
+.pv-ic--md{ width:22px; height:22px; }
+.pv-ic--lg{ width:30px; height:30px; stroke-width:1.4; }
+.pv-ic--xl{ width:40px; height:40px; stroke-width:1.3; }
+
+/* Плитка з іконкою у швидких діях */
+.pv-tile{
+    width:52px;
+    height:52px;
+    border-radius:14px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:#f4efe7;
+    color:var(--pv-gold);
+}
+.pv-tile .pv-ic{ width:26px; height:26px; stroke-width:1.5; }
+.pv-tile--dark{
+    background:rgba(255,255,255,.08);
+    color:#dccdb6;
+    box-shadow:inset 0 0 0 1px rgba(255,255,255,.14);
+}
+
+/* Іконки в категоріях стоять у рядку з текстом */
+.category-btn{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+}
+.category-btn .pv-ic{ color:var(--pv-gold); }
+.category-btn.active .pv-ic{ color:#dccdb6; }
+
+/* На сторінці «Асистент» плаваючий кошик закривав поле вводу — ховаємо його там */
+body:has(#ai-page:not(.hidden)) #floating-cart{
+    display:none !important;
+}

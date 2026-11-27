@@ -950,7 +950,7 @@ async function fetchCabinetData() {
             if (!data.orders || data.orders.length === 0) {
                 ordersContainer.innerHTML = `
                     <div class="text-center text-gray-400 py-10">
-                        <div class="text-4xl mb-3">📦</div>
+                        <div class="mb-3 flex justify-center text-gray-300"><svg class="pv-ic pv-ic--xl" aria-hidden="true"><use href="#i-package"/></svg></div>
                         У вас поки немає активних замовлень
                     </div>`;
                 return;
@@ -1020,7 +1020,7 @@ function updateLoyaltyCard(totalSpent, discount) {
 
     if (text) {
         if (discount >= 10) {
-            text.textContent = "Максимальна знижка 10% активна — дякуємо, що обираєте нас! 💙";
+            text.textContent = "Максимальна знижка 10% активна — дякуємо, що обираєте нас!";
         } else {
             const nextThreshold = discount === 0 ? 2000 : 5000;
             const remaining = Math.max(1, nextThreshold - totalSpent);
@@ -1251,7 +1251,7 @@ function renderOrdersList(orders) {
     if (!orders || orders.length === 0) {
         container.innerHTML = `
             <div class="bg-white rounded-[24px] p-8 text-center border border-slate-100 shadow-[0_4px_12px_rgba(0,0,0,0.02)]">
-                <div class="text-4xl mb-3">🧺</div>
+                <div class="mb-3 flex justify-center text-blue-500"><svg class="pv-ic pv-ic--xl" aria-hidden="true"><use href="#i-basket"/></svg></div>
                 <h4 class="font-bold text-slate-900 text-sm mb-1">У вас поки немає замовлень</h4>
                 <p class="text-xs text-slate-500 mb-5">Оформіть ваше перше замовлення пральні або ательє!</p>
                 <button onclick="showPage('home')" class="bg-blue-50 text-blue-600 font-bold px-5 py-2.5 rounded-full text-xs active:scale-95 transition-transform">
@@ -1265,7 +1265,9 @@ function renderOrdersList(orders) {
     // Собираем карточки заказов
     container.innerHTML = orders.map(order => {
         const isAtelier = order.type === 'atelier';
-        const icon = isAtelier ? '✂️' : '🫧';
+        const icon = isAtelier
+            ? '<svg class="pv-ic pv-ic--md text-blue-500" aria-hidden="true"><use href="#i-scissors"/></svg>'
+            : '<svg class="pv-ic pv-ic--md text-blue-500" aria-hidden="true"><use href="#i-washer"/></svg>';
         
         // Определяем цвет и иконку статуса с учетом нового дизайна
         let statusBg = "bg-slate-50 text-slate-600 border-slate-200/50";
