@@ -6,7 +6,7 @@
 
     <meta
         name="viewport"
-        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
     >
 
     <title>Pralnya Vdoma</title>
@@ -14,15 +14,53 @@
     <!-- Telegram Mini App -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
+    <!-- Шрифти сайту: Cormorant Garamond (заголовки) + Manrope (текст) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
     <!-- Tailwind -->
     <script src="https://cdn.tailwindcss.com"></script>
 
+    <!-- Тема в стилі сайту (кольори, шрифти, тіні) — після Tailwind -->
+    <script src="theme.js?v=2026-11-27"></script>
+
     <!-- Наш CSS -->
-    <link rel="stylesheet" href="style.css?=v=3">
+    <link rel="stylesheet" href="style.css?v=2026-11-27">
 
 </head>
 
-<body class="bg-gray-100">
+<body class="bg-gray-50">
+
+<!-- Лінійні іконки в стилі сайту (тонка лінія, колір = currentColor).
+     Більшість контурів — з набору Lucide (ліцензія ISC), кілька намальовано вручну. -->
+<svg xmlns="http://www.w3.org/2000/svg" style="display:none" aria-hidden="true">
+  <symbol id="i-basket" viewBox="0 0 24 24"><path d="M3 10h18l-1.6 9.2A2 2 0 0 1 17.4 21H6.6a2 2 0 0 1-2-1.8z"/><path d="m7 10 3-6"/><path d="m17 10-3-6"/><path d="M9 14v3"/><path d="M12 14v3"/><path d="M15 14v3"/></symbol>
+  <symbol id="i-washer" viewBox="0 0 24 24"><rect x="3" y="2" width="18" height="20" rx="2"/><path d="M3 6h3"/><path d="M17 6h.01"/><circle cx="12" cy="13" r="5"/><path d="M12 18a2.5 2.5 0 0 0 0-5 2.5 2.5 0 0 1 0-5"/></symbol>
+  <symbol id="i-truck" viewBox="0 0 24 24"><path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"/><path d="M15 18H9"/><path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.62l-3.48-4.35A1 1 0 0 0 17.52 8H14"/><circle cx="17" cy="18" r="2"/><circle cx="7" cy="18" r="2"/></symbol>
+  <symbol id="i-scissors" viewBox="0 0 24 24"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M20 4 8.12 15.88"/><path d="M14.47 14.48 20 20"/><path d="M8.12 8.12 12 12"/></symbol>
+  <symbol id="i-building" viewBox="0 0 24 24"><path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z"/><path d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2"/><path d="M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2"/><path d="M10 6h4"/><path d="M10 10h4"/><path d="M10 14h4"/><path d="M10 18h4"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></symbol>
+  <symbol id="i-shirt" viewBox="0 0 24 24"><path d="M20.38 3.46 16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.47a1 1 0 0 0 .99.84H6v10a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.47a2 2 0 0 0-1.34-2.23z"/></symbol>
+  <symbol id="i-coat" viewBox="0 0 24 24"><path d="M9 2.5 12 5l3-2.5 4.5 2.2a1 1 0 0 1 .5.8V21a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V5.5a1 1 0 0 1 .5-.8z"/><path d="M12 5v17"/><path d="m9 2.5-1 5 4 3"/><path d="m15 2.5 1 5-4 3"/><path d="M7 15h2"/></symbol>
+  <symbol id="i-bed" viewBox="0 0 24 24"><path d="M2 4v16"/><path d="M2 8h18a2 2 0 0 1 2 2v10"/><path d="M2 17h20"/><path d="M6 8v9"/></symbol>
+  <symbol id="i-shoe" viewBox="0 0 24 24"><path d="M3 7v10h17a2 2 0 0 0 2-2 3 3 0 0 0-2.4-2.9L14 11l-3-4z"/><path d="M3 17v2h19v-4"/><path d="m8 9 1.5-1.5"/><path d="m10.5 11 1.5-1.5"/></symbol>
+  <symbol id="i-bag" viewBox="0 0 24 24"><path d="M5.2 8h13.6l1.2 12a1 1 0 0 1-1 1.1H5a1 1 0 0 1-1-1.1z"/><path d="M9 10V6a3 3 0 0 1 6 0v4"/></symbol>
+  <symbol id="i-drop" viewBox="0 0 24 24"><path d="M12 22a7 7 0 0 0 7-7c0-2-1-3.9-3-5.5s-3.5-4-4-6.5c-.5 2.5-2 4.9-4 6.5C6 11.1 5 13 5 15a7 7 0 0 0 7 7z"/></symbol>
+  <symbol id="i-iron" viewBox="0 0 24 24"><path d="M2 18h19v-2a6 6 0 0 0-6-6H7z"/><path d="M9 10V7h8a2 2 0 0 1 2 2v3"/><path d="M5 22h.01"/><path d="M10 22h.01"/><path d="M15 22h.01"/></symbol>
+  <symbol id="i-sparkle" viewBox="0 0 24 24"><path d="M9.94 15.5A2 2 0 0 0 8.5 14.06l-6.14-1.58a.5.5 0 0 1 0-.96L8.5 9.94A2 2 0 0 0 9.94 8.5l1.58-6.14a.5.5 0 0 1 .96 0l1.58 6.14a2 2 0 0 0 1.44 1.44l6.14 1.58a.5.5 0 0 1 0 .96l-6.14 1.58a2 2 0 0 0-1.44 1.44l-1.58 6.14a.5.5 0 0 1-.96 0z"/></symbol>
+  <symbol id="i-star" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z"/></symbol>
+  <symbol id="i-package" viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="M3.3 7 12 12l8.7-5"/><path d="M12 22V12"/><path d="m7.5 4.2 9 5.2"/></symbol>
+  <symbol id="i-user" viewBox="0 0 24 24"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></symbol>
+  <symbol id="i-pencil" viewBox="0 0 24 24"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></symbol>
+  <symbol id="i-zap" viewBox="0 0 24 24"><path d="M13 2 3 14h9l-1 8 10-12h-9z"/></symbol>
+  <symbol id="i-wallet" viewBox="0 0 24 24"><path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1"/><path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4"/></symbol>
+  <symbol id="i-chat" viewBox="0 0 24 24"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/><path d="M8 12h.01"/><path d="M12 12h.01"/><path d="M16 12h.01"/></symbol>
+  <symbol id="i-pin" viewBox="0 0 24 24"><path d="M20 10c0 5-5.54 10.19-7.4 11.8a1 1 0 0 1-1.2 0C9.54 20.19 4 15 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/></symbol>
+  <symbol id="i-card" viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></symbol>
+  <symbol id="i-phone" viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M12 18h.01"/></symbol>
+</svg>
+
 
 <div id="app" class="min-h-screen pb-24">
 
@@ -51,7 +89,7 @@
             </div>
 
             <!-- Іконка кошика (Soft UI) -->
-            <button class="w-11 h-11 rounded-[16px] bg-indigo-50 flex items-center justify-center text-indigo-600 transition-transform active:scale-[0.95] ring-1 ring-indigo-100/50 shadow-[0_4px_12px_-4px_rgba(79,70,229,0.12)]">
+            <button class="w-11 h-11 rounded-[16px] bg-indigo-50 flex items-center justify-center text-indigo-600 transition-transform active:scale-[0.95] ring-1 ring-indigo-100/50 shadow-[0_4px_12px_-4px_rgba(31,42,51,0.10)]">
                 <!-- SVG Кошик -->
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path>
@@ -86,7 +124,7 @@ shadow-xl">
                 id="greeting-text"
                 class="text-sm opacity-80">
 
-                Доброго дня 👋
+                Доброго дня
 
             </p>
 
@@ -108,9 +146,9 @@ shadow-xl">
         </div>
 
         <div
-            class="w-20 h-20 rounded-3xl bg-white/20 flex items-center justify-center text-5xl">
+            class="w-20 h-20 rounded-3xl bg-white/10 ring-1 ring-white/20 flex items-center justify-center text-blue-200">
 
-            🧺
+            <svg class="pv-ic pv-ic--xl" aria-hidden="true"><use href="#i-basket"/></svg>
 
         </div>
 
@@ -120,7 +158,7 @@ shadow-xl">
         class="mt-6 rounded-[20px] bg-white/15 backdrop-blur-md p-4 border border-white/25 shadow-inner">
 
         <div class="font-semibold text-lg flex items-center gap-2">
-            <span>🚚</span> Безкоштовний забір та доставка
+            <svg class="pv-ic pv-ic--md text-blue-200" aria-hidden="true"><use href="#i-truck"/></svg> Безкоштовний забір та доставка
         </div>
 
         <div class="text-sm opacity-90 mt-1">
@@ -194,7 +232,7 @@ shadow-xl">
             data-page="order">
             <div class="flex justify-between items-center">
                 <div class="text-left">
-                    <div class="text-5xl">🧺</div>
+                    <div class="pv-tile"><svg class="pv-ic" aria-hidden="true"><use href="#i-basket"/></svg></div>
                     <div class="mt-4 text-xl font-bold">Здати речі</div>
                     <div class="text-gray-500 mt-2">Прання, аквачистка та прасування</div>
                 </div>
@@ -208,7 +246,7 @@ shadow-xl">
             data-page="atelier">
             <div class="flex justify-between items-center">
                 <div class="text-left">
-                    <div class="text-5xl">🧵</div>
+                    <div class="pv-tile"><svg class="pv-ic" aria-hidden="true"><use href="#i-scissors"/></svg></div>
                     <div class="mt-4 text-xl font-bold">Ательє</div>
                     <div class="text-gray-500 mt-2">Ремонт, реставрація та підгонка</div>
                 </div>
@@ -222,7 +260,7 @@ shadow-xl">
             data-page="b2b">
             <div class="flex justify-between items-center">
                 <div class="text-left">
-                    <div class="text-5xl">🏢</div>
+                    <div class="pv-tile pv-tile--dark"><svg class="pv-ic" aria-hidden="true"><use href="#i-building"/></svg></div>
                     <div class="mt-4 text-xl font-bold">B2B для бізнесу</div>
                     <div class="opacity-80 mt-2">Послуги для готелів, ресторанів та офісів</div>
                 </div>
@@ -256,7 +294,7 @@ shadow-xl">
 
             <h1 class="text-3xl font-bold mt-1">
 
-                🧺 Здати речі
+                Здати речі
 
             </h1>
 
@@ -269,9 +307,9 @@ shadow-xl">
         </div>
 
         <div
-            class="w-16 h-16 rounded-3xl bg-blue-100 flex items-center justify-center text-4xl">
+            class="w-16 h-16 rounded-3xl bg-blue-50 ring-1 ring-blue-100 flex items-center justify-center text-blue-500">
 
-            🧺
+            <svg class="pv-ic pv-ic--lg" aria-hidden="true"><use href="#i-basket"/></svg>
 
         </div>
 
@@ -322,9 +360,9 @@ shadow-xl">
     <div
         class="flex items-center rounded-2xl bg-white shadow-md px-5 py-4">
 
-        <span class="text-2xl mr-3">
+        <span class="mr-3 text-gray-400 flex">
 
-            🔍
+            <svg class="pv-ic pv-ic--md" aria-hidden="true"><use href="#i-search"/></svg>
 
         </span>
 
@@ -347,35 +385,35 @@ shadow-xl">
     <div class="flex gap-3 overflow-x-auto pb-2 no-scrollbar">
 
         <button class="category-btn active" data-category="clothing">
-            👔 Одяг
+            <svg class="pv-ic pv-ic--sm" aria-hidden="true"><use href="#i-shirt"/></svg> Одяг
         </button>
 
         <button class="category-btn" data-category="outerwear">
-            🧥 Верхній одяг
+            <svg class="pv-ic pv-ic--sm" aria-hidden="true"><use href="#i-coat"/></svg> Верхній одяг
         </button>
 
         <button class="category-btn" data-category="textile">
-            🛏 Білизна
+            <svg class="pv-ic pv-ic--sm" aria-hidden="true"><use href="#i-bed"/></svg> Білизна
         </button>
 
         <button class="category-btn" data-category="shoes">
-            👟 Взуття
+            <svg class="pv-ic pv-ic--sm" aria-hidden="true"><use href="#i-shoe"/></svg> Взуття
         </button>
 
         <button class="category-btn" data-category="accessories">
-            👜 Аксесуари
+            <svg class="pv-ic pv-ic--sm" aria-hidden="true"><use href="#i-bag"/></svg> Аксесуари
         </button>
 
         <button class="category-btn" data-category="aquaclean">
-            💧 Аквачистка
+            <svg class="pv-ic pv-ic--sm" aria-hidden="true"><use href="#i-drop"/></svg> Аквачистка
         </button>
 
         <button class="category-btn" data-category="ironing">
-            ♨️ Прасування
+            <svg class="pv-ic pv-ic--sm" aria-hidden="true"><use href="#i-iron"/></svg> Прасування
         </button>
 
         <button class="category-btn" data-category="extra">
-            ✨ Додатково
+            <svg class="pv-ic pv-ic--sm" aria-hidden="true"><use href="#i-sparkle"/></svg> Додатково
         </button>
 
     </div>
@@ -390,7 +428,7 @@ shadow-xl">
 
     <h3 class="text-xl font-bold mb-4">
 
-        ⭐ Популярні послуги
+        Популярні послуги
 
     </h3>
 
@@ -422,7 +460,7 @@ shadow-xl">
 
     <div id="search-empty-state" class="hidden text-center text-gray-400 py-10">
 
-        Нічого не знайдено 🤷‍♀️
+        Нічого не знайдено
 
     </div>
 
@@ -495,7 +533,7 @@ shadow-xl">
         <div class="flex justify-between items-center">
             <div>
                 <div class="text-sm text-gray-500">Pralnya Vdoma</div>
-                <h1 class="text-3xl font-bold mt-1">📦 Мої замовлення</h1>
+                <h1 class="text-3xl font-bold mt-1">Мої замовлення</h1>
                 <p class="text-gray-500 mt-2">Історія та поточні статуси</p>
             </div>
         </div>
@@ -516,7 +554,7 @@ shadow-xl">
     <div class="bg-white rounded-[20px] p-3 mb-5 shadow-sm border border-gray-100 flex items-center justify-between">
         <div class="flex items-center gap-3">
             <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-500 text-white flex items-center justify-center text-lg shadow-md shadow-blue-200/50">
-                ✨
+                <svg class="pv-ic pv-ic--md" aria-hidden="true"><use href="#i-sparkle"/></svg>
             </div>
             <div>
                 <h2 class="font-bold text-gray-900 text-[15px]">Pralnya AI</h2>
@@ -536,22 +574,22 @@ shadow-xl">
         
         <!-- Швидкі питання -->
         <div class="flex gap-2 overflow-x-auto pb-2 scrollbar-none mb-4">
-            <button class="shrink-0 bg-white text-gray-700 text-xs font-medium px-4 py-2.5 rounded-[14px] shadow-sm border border-gray-100 active:scale-95 transition">
-                🫧 Ціни на прання
+            <button class="ai-chip shrink-0 bg-white text-gray-700 text-xs font-medium px-4 py-2.5 rounded-[14px] shadow-sm border border-gray-100 active:scale-95 transition">
+                Ціни на прання
             </button>
-            <button class="shrink-0 bg-white text-gray-700 text-xs font-medium px-4 py-2.5 rounded-[14px] shadow-sm border border-gray-100 active:scale-95 transition">
-                ✂️ Ательє
+            <button class="ai-chip shrink-0 bg-white text-gray-700 text-xs font-medium px-4 py-2.5 rounded-[14px] shadow-sm border border-gray-100 active:scale-95 transition">
+                Ательє
             </button>
-            <button class="shrink-0 bg-white text-gray-700 text-xs font-medium px-4 py-2.5 rounded-[14px] shadow-sm border border-gray-100 active:scale-95 transition">
-                🍷 Видалити пляму
+            <button class="ai-chip shrink-0 bg-white text-gray-700 text-xs font-medium px-4 py-2.5 rounded-[14px] shadow-sm border border-gray-100 active:scale-95 transition">
+                Видалити пляму
             </button>
         </div>
 
         <!-- Повідомлення Бота -->
         <div class="flex items-end gap-2.5">
-            <div class="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-500 flex-shrink-0 flex items-center justify-center text-[13px] shadow-sm text-white">✨</div>
+            <div class="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-500 flex-shrink-0 flex items-center justify-center text-[13px] shadow-sm text-white"><svg class="pv-ic pv-ic--sm" aria-hidden="true"><use href="#i-sparkle"/></svg></div>
             <div class="bg-white p-4 rounded-[20px] rounded-bl-sm text-[14px] text-gray-800 shadow-sm border border-gray-100 max-w-[85%] leading-relaxed">
-                Вітаю! 👋 Я розумний асистент <b>PralnyaVdoma</b>. 
+                Вітаю! Я розумний асистент <b>PralnyaVdoma</b>. 
                 <br><br>
                 Можу підказати ціни, порадити, як доглядати за речами або допомогти оформити замовлення. Про що хочете запитати?
             </div>
@@ -583,7 +621,7 @@ shadow-xl">
         <div class="flex items-center justify-between mb-4">
             <div class="flex items-center gap-3">
                 <div class="w-12 h-12 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-500 text-white flex items-center justify-center font-bold text-lg shadow-md shadow-blue-100" id="user-avatar-initials">
-                    👤
+                    <svg class="pv-ic pv-ic--md" aria-hidden="true"><use href="#i-user"/></svg>
                 </div>
                 <div>
                     <h2 class="font-bold text-gray-900 text-lg leading-tight" id="profile-display-name">Завантаження...</h2>
@@ -591,7 +629,7 @@ shadow-xl">
                 </div>
             </div>
             <button id="toggle-edit-profile-btn" class="w-9 h-9 rounded-full bg-gray-50 border border-gray-100 flex items-center justify-center text-gray-600 hover:bg-gray-100 active:scale-95 transition">
-                ✏️
+                <svg class="pv-ic pv-ic--sm" aria-hidden="true"><use href="#i-pencil"/></svg>
             </button>
         </div>
 
@@ -622,7 +660,7 @@ shadow-xl">
     </div>
 
     <!-- 3. Карточка программы лояльности (Премиум Glassmorphism) -->
-    <div class="relative overflow-hidden rounded-[28px] bg-gradient-to-br from-blue-600 via-indigo-600 to-blue-700 p-6 text-white shadow-[0_16px_36px_-10px_rgba(37,99,235,0.35)] transition-all active:scale-[0.99] mb-6">
+    <div class="relative overflow-hidden rounded-[28px] bg-gradient-to-br from-blue-600 via-indigo-600 to-blue-700 p-6 text-white shadow-[0_16px_36px_-10px_rgba(31,42,51,0.35)] transition-all active:scale-[0.99] mb-6">
         <!-- Декоративные фоновые блики -->
         <div class="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-white/10 blur-2xl"></div>
         <div class="pointer-events-none absolute -bottom-10 -left-10 h-32 w-32 rounded-full bg-blue-400/20 blur-xl"></div>
@@ -674,11 +712,11 @@ shadow-xl">
         <div class="flex justify-between items-center">
             <div>
                 <div class="text-sm text-gray-500">Pralnya Vdoma</div>
-                <h1 class="text-3xl font-bold mt-1">🧵 Ательє</h1>
+                <h1 class="text-3xl font-bold mt-1">Ательє</h1>
                 <p class="text-gray-500 mt-2">Ремонт та реставрація вашого одягу</p>
             </div>
-            <div class="w-16 h-16 rounded-3xl bg-indigo-100 flex items-center justify-center text-4xl">
-                ✂️
+            <div class="w-16 h-16 rounded-3xl bg-blue-50 ring-1 ring-blue-100 flex items-center justify-center text-blue-500">
+                <svg class="pv-ic pv-ic--lg" aria-hidden="true"><use href="#i-scissors"/></svg>
             </div>
         </div>
     </section>
@@ -705,26 +743,26 @@ shadow-xl">
     
     <section class="mb-6">
         <div class="text-sm text-gray-500">Pralnya Vdoma</div>
-        <h1 class="text-3xl font-bold mt-1">💼 Для бізнесу</h1>
+        <h1 class="text-3xl font-bold mt-1">Для бізнесу</h1>
         <p class="text-gray-500 mt-2">Спеціальні умови для комерційних клієнтів</p>
     </section>
 
     <!-- Блок Переваг -->
     <section class="grid grid-cols-2 gap-4 mb-6">
-        <div class="bg-blue-50 rounded-[20px] p-4 border border-blue-100 shadow-sm">
-            <div class="text-2xl mb-2">🚚</div>
+        <div class="bg-white rounded-[20px] p-4 border border-gray-200 shadow-sm">
+            <div class="mb-2 text-blue-500"><svg class="pv-ic pv-ic--md" aria-hidden="true"><use href="#i-truck"/></svg></div>
             <div class="font-bold text-sm text-gray-900">Безкоштовна доставка</div>
         </div>
-        <div class="bg-indigo-50 rounded-[20px] p-4 border border-indigo-100 shadow-sm">
-            <div class="text-2xl mb-2">⚡</div>
+        <div class="bg-white rounded-[20px] p-4 border border-gray-200 shadow-sm">
+            <div class="mb-2 text-blue-500"><svg class="pv-ic pv-ic--md" aria-hidden="true"><use href="#i-zap"/></svg></div>
             <div class="font-bold text-sm text-gray-900">Пріоритетне виконання</div>
         </div>
-        <div class="bg-green-50 rounded-[20px] p-4 border border-green-100 shadow-sm">
-            <div class="text-2xl mb-2">💰</div>
+        <div class="bg-white rounded-[20px] p-4 border border-gray-200 shadow-sm">
+            <div class="mb-2 text-blue-500"><svg class="pv-ic pv-ic--md" aria-hidden="true"><use href="#i-wallet"/></svg></div>
             <div class="font-bold text-sm text-gray-900">Гнучкі тарифи об'єму</div>
         </div>
-        <div class="bg-orange-50 rounded-[20px] p-4 border border-orange-100 shadow-sm">
-            <div class="text-2xl mb-2">🤝</div>
+        <div class="bg-white rounded-[20px] p-4 border border-gray-200 shadow-sm">
+            <div class="mb-2 text-blue-500"><svg class="pv-ic pv-ic--md" aria-hidden="true"><use href="#i-chat"/></svg></div>
             <div class="font-bold text-sm text-gray-900">Особистий менеджер</div>
         </div>
     </section>
@@ -802,7 +840,7 @@ shadow-xl">
     </section>
 
     <!-- Кнопка підтвердження -->
-    <button id="confirm-order-btn" class="w-full bg-blue-600 text-white font-bold rounded-[16px] py-4 shadow-[0_8px_20px_rgba(37,99,235,0.2)] hover:bg-blue-700 transition">
+    <button id="confirm-order-btn" class="w-full bg-blue-600 text-white font-bold rounded-[16px] py-4 shadow-[0_8px_20px_rgba(31,42,51,0.2)] hover:bg-blue-700 transition">
         Підтвердити замовлення
     </button>
 </main>
@@ -889,9 +927,9 @@ shadow-xl">
 <!-- Шторка: АДРЕС -->
 <div id="modal-address" class="hidden fixed bottom-0 left-0 right-0 bg-white rounded-t-[32px] p-6 z-[110] transform transition-transform duration-300 translate-y-full pb-10">
     <div class="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-6"></div>
-    <h3 class="text-xl font-bold mb-4">📍 Ваша адреса</h3>
+    <h3 class="text-xl font-bold mb-4">Ваша адреса</h3>
     <input type="text" id="address-input" placeholder="Вулиця, будинок, квартира" class="w-full bg-gray-50 border border-gray-200 rounded-[16px] p-4 outline-none focus:border-blue-500 transition-colors mb-4 text-[15px]">
-    <button id="save-address-btn" class="w-full bg-blue-600 text-white font-bold rounded-[16px] py-4 shadow-[0_8px_20px_rgba(37,99,235,0.2)] hover:bg-blue-700 transition">
+    <button id="save-address-btn" class="w-full bg-blue-600 text-white font-bold rounded-[16px] py-4 shadow-[0_8px_20px_rgba(31,42,51,0.2)] hover:bg-blue-700 transition">
         Зберегти адресу
     </button>
 </div>
@@ -899,11 +937,11 @@ shadow-xl">
 <!-- Шторка: ОПЛАТА -->
 <div id="modal-payment" class="hidden fixed bottom-0 left-0 right-0 bg-white rounded-t-[32px] p-6 z-[110] transform transition-transform duration-300 translate-y-full pb-10">
     <div class="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-6"></div>
-    <h3 class="text-xl font-bold mb-4">💳 Способи оплати</h3>
+    <h3 class="text-xl font-bold mb-4">Способи оплати</h3>
     
     <div class="bg-gray-50 rounded-[16px] p-4 flex items-center justify-between border border-gray-200 mb-4">
         <div class="flex items-center gap-3">
-            <div class="text-2xl">📱</div>
+            <div class="text-blue-500 flex"><svg class="pv-ic pv-ic--md" aria-hidden="true"><use href="#i-phone"/></svg></div>
             <div class="font-bold text-[15px]">Apple Pay / Google Pay</div>
         </div>
         <div class="text-green-600 text-xs font-bold bg-green-100 px-2 py-1 rounded-md">Активно</div>
