@@ -181,6 +181,8 @@ class B2BData(BaseModel):
 class AIMessageData(BaseModel):
     message: str = ""
     telegram_id: Optional[Any] = None
+    name: Optional[str] = ""      # бот передає ім'я та @username клієнта для повідомлення адміну
+    username: Optional[str] = ""
     
 router = APIRouter()
 
@@ -192,10 +194,58 @@ async def get_prices(response: Response):
     return PRICE_DATA
 
 
+def notify_admin_handoff(tg_id, name: str, username: str, channel: str, dialog: list) -> bool:
+    """Надсилає адміну розмову з AI-консультантом. Відповісти клієнту — командою /reply_<id> у боті."""
+    if not ADMIN_CHAT_ID or not TELEGRAM_TOKEN or not tg_id:
+        return False
+    who = html.escape(name or "Клієнт")
+    if username:
+        who += f" (@{html.escape(str(username).lstrip('@'))})"
+    lines = []
+    for role, text in dialog[-8:]:
+        icon = "👤" if role == "user" else "🤖"
+        lines.append(f"{icon} {html.escape(text[:600])}")
+    where = "бот" if channel == "bot" else "Mini App"
+    msg = (
+        f"🙋 <b>Клієнту потрібен адміністратор</b> (AI-консультант, {where})\n"
+        f"Клієнт: {who}, id {html.escape(str(tg_id))}\n\n"
+        + "\n\n".join(lines)
+    )[:3800] + f"\n\nВідповісти: /reply_{int(tg_id)}"
+    try:
+        url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
+        resp = requests.post(url, json={"chat_id": ADMIN_CHAT_ID, "text": msg, "parse_mode": "HTML"}, timeout=10)
+        if not resp.ok:
+            print(f"⚠️ Передача адміну не вдалася: {resp.text[:300]}")
+        return resp.ok
+    except Exception as e:
+        print(f"⚠️ Передача адміну не вдалася: {e}")
+        return False
+
+
+async def run_assistant(message: str, tg_id, name: str, username: str, channel: str) -> str:
+    """Відповідь асистента + передача адміністратору, якщо модель про це попросила."""
+    reply = await brain.answer(message, str(tg_id or "unknown"), channel, PRICE_DATA)
+    if not reply.handoff:
+        return reply.text
+    person = str(tg_id or "unknown")
+    try:
+        int(tg_id)
+    except (TypeError, ValueError):
+        return f"{reply.text}\n\n{brain.HANDOFF_FAILED}"
+    if not brain.handoff_due(person):
+        return f"{reply.text}\n\n{brain.HANDOFF_ALREADY}"
+    sent = await asyncio.to_thread(notify_admin_handoff, tg_id, name, username, channel, reply.dialog)
+    if not sent:
+        brain.handoff_failed(person)
+        return f"{reply.text}\n\n{brain.HANDOFF_FAILED}"
+    return f"{reply.text}\n\n{brain.HANDOFF_SENT}"
+
+
 @app.post("/api/ai")
 async def ai_chat(data: AIMessageData, tg_user: dict = Depends(require_tg_user)):
     """Асистент у Mini App. Клієнта визначаємо з підпису Telegram, а не з telegram_id у тілі запиту."""
-    reply = await brain.answer(data.message, str(tg_user.get("id")), "miniapp", PRICE_DATA)
+    name = " ".join(x for x in (tg_user.get("first_name"), tg_user.get("last_name")) if x)
+    reply = await run_assistant(data.message, tg_user.get("id"), name, tg_user.get("username") or "", "miniapp")
     return {"status": "success", "reply": reply}
 
 
@@ -205,7 +255,7 @@ async def ai_chat_bot(data: AIMessageData, x_bot_signature: Optional[str] = Head
     expected = bot_ai_signature()
     if not expected or not hmac.compare_digest(expected, x_bot_signature or ""):
         raise HTTPException(status_code=401, detail="unauthorized")
-    reply = await brain.answer(data.message, str(data.telegram_id or "unknown"), "bot", PRICE_DATA)
+    reply = await run_assistant(data.message, data.telegram_id, data.name or "", data.username or "", "bot")
     return {"status": "success", "reply": reply}
 
 # --- 1. GET: Загрузка кабинета ---
