@@ -1147,7 +1147,10 @@ function appendMessage(text, sender) {
         : "bg-white p-3.5 rounded-[20px] rounded-tl-sm text-sm text-gray-800 shadow-sm border border-gray-100 max-w-[85%] self-start leading-relaxed animate-fade-in";
 
     // Превращаем переносы строк \n в html теги <br>
-    bubble.innerHTML = text.replace(/\n/g, '<br>');
+    // Спершу екрануємо текст (відповідь ІІ чи повідомлення клієнта не повинні виконуватися як HTML), потім \n -> <br>
+    const safe = String(text).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    bubble.innerHTML = safe.replace(/\n/g, '<br>');
     aiMessages.appendChild(bubble);
     
     // Скроллим вниз
